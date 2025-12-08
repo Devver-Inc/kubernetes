@@ -1,0 +1,25 @@
+# Longhorn headless configuration
+
+defaultSettings:
+  defaultReplicaCount: 3  # nombre de répliques par volume
+  replicaSoftAntiAffinity: true
+  staleReplicaTimeout: 30
+  fromBackup: ""
+
+# UI et manager non nécessaires si on veut juste stockage pour PVC
+ui:
+  enabled: false
+manager:
+  enabled: true
+
+# Désactiver ingress/metrics si pas nécessaire
+ingress:
+  enabled: false
+  host: ""
+
+# Disques par node (chaque node doit avoir un disque dédié)
+nodeSelector: {}
+tolerations: []
+
+# Paramètres de stockage par node (exemple disque dédié /dev/sdb)
+# Longhorn gère automatiquement les disques via DaemonSet

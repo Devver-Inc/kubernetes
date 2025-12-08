@@ -1,0 +1,18 @@
+provider: cloudflare
+
+cloudflare:
+  apiToken:
+    existingSecret: external-dns
+    key: CF_API_TOKEN
+
+domainFilters:
+  - "vrhometech.fr"
+
+policy: sync
+
+sources:
+  - ingress
+
+txtOwnerId: k8s-traefik
+
+logLevel: info
