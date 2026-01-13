@@ -46,7 +46,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-  - host: test-k8s-devver.app
+  - host: k8s.devver.app
     http:
       paths:
       - path: /
@@ -58,4 +58,4 @@ spec:
               number: 80
   tls:
   - hosts:
-      - test-k8s-devver.app
+      - k8s.devver.app
