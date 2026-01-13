@@ -26,7 +26,7 @@ dashboard:
 
 ports:
   web:
-    redirected: true
+#    redirected: true
   websecure:
     tls:
       enabled: true
