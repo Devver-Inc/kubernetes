@@ -22,7 +22,7 @@ sources:
 # FILTRAGE DES DOMAINES
 # ----------------------------------------------------------------
 domainFilters:
-  - "vrhometech.fr"
+  - "devver.app"
 
 # ----------------------------------------------------------------
 # MODE DE SYNCHRONISATION

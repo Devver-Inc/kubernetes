@@ -6,7 +6,7 @@ cloudflare:
     key: CF_API_TOKEN
 
 domainFilters:
-  - "vrhometech.fr"
+  - "devver.app"
 
 policy: sync
 
