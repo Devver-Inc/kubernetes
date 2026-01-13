@@ -1,18 +1,18 @@
-provider: cloudflare
+# provider: cloudflare
 
-cloudflare:
-  apiToken:
-    existingSecret: external-dns
-    key: CF_API_TOKEN
+# cloudflare:
+#   apiToken:
+#     existingSecret: external-dns
+#     key: CF_API_TOKEN
 
-domainFilters:
-  - "devver.app"
+# domainFilters:
+#   - "devver.app"
 
-policy: sync
+# policy: sync
 
-sources:
-  - ingress
+# sources:
+#   - ingress
 
-txtOwnerId: k8s-traefik
+# txtOwnerId: k8s-traefik
 
-logLevel: info
+# logLevel: info
