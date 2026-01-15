@@ -23,6 +23,12 @@ spec:
       - name: {{ .Values.project.name }}
         image: {{ .Values.container.image }}
         imagePullPolicy: IfNotPresent
+        {{- if .Values.container.command }}
+        command: {{ toJson .Values.container.command }}
+        {{- end }}
+        {{- if .Values.container.args }}
+        args: {{ toJson .Values.container.args }}
+        {{- end }}
         ports:
         - name: http
           containerPort: {{ .Values.container.port }}

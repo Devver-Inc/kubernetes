@@ -13,6 +13,11 @@ container:
   port: 8080  # Port exposé par le conteneur
   # Type de déploiement: "linux" pour un OS, "app" pour une application
   type: "linux"
+  # Commande pour garder le conteneur actif (important pour un OS)
+  # Pour un OS: "sleep infinity" ou "tail -f /dev/null"
+  # Pour une app: spécifier la commande de démarrage de l'application
+  command: ["sleep"]
+  args: ["infinity"]
   
 # Configuration des ressources
 resources:
