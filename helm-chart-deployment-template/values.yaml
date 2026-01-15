@@ -1,11 +1,11 @@
 # Configuration de l'organisation et du projet
 organization:
-  name: "devver"  # Nom de l'organisation
+  name: "orgtest"  # Nom de l'organisation
   domain: "devver.app"  # Domaine principal
 
 project:
-  name: "myapp"  # Nom du projet
-  displayName: "My App"  # Nom d'affichage
+  name: "projtest"  # Nom du projet
+  displayName: "projtest"  # Nom d'affichage
 
 # Configuration du conteneur (OS Linux complet ou application)
 container:
