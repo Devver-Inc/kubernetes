@@ -9,15 +9,16 @@ project:
 
 # Configuration du conteneur (OS Linux complet ou application)
 container:
-  image: "debian:bookworm"  # Image du conteneur (OS Linux ou application)
-  port: 8080  # Port exposé par le conteneur
+  image: "nginx:latest"  # Image du conteneur (OS Linux ou application)
+  port: 80  # Port exposé par le conteneur
   # Type de déploiement: "linux" pour un OS, "app" pour une application
-  type: "linux"
-  # Commande pour garder le conteneur actif (important pour un OS)
-  # Pour un OS: "sleep infinity" ou "tail -f /dev/null"
-  # Pour une app: spécifier la commande de démarrage de l'application
-  command: ["sleep"]
-  args: ["infinity"]
+  type: "app"
+  # Commande pour démarrer l'application (laisser vide pour nginx)
+  # Pour nginx: laisser vide (image par défaut)
+  # Pour Ubuntu/Debian: ["sleep", "infinity"]
+  # Pour Apache: ["/usr/sbin/apache2ctl", "-D", "FOREGROUND"]
+  command: []
+  args: []
   
 # Configuration des ressources
 resources:
