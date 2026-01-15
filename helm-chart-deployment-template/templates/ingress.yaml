@@ -8,10 +8,11 @@ metadata:
   annotations:
     external-dns.alpha.kubernetes.io/target: "reverse-proxy.vrhometech.fr"
     traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
-    # Configuration ACME pour Traefik - génération automatique des certificats
-    cert.traefik.io/enabled: "true"
 spec:
   ingressClassName: traefik
+  tls:
+  - hosts:
+      - {{ include "app-template.hostname" . }}
   rules:
   - host: {{ include "app-template.hostname" . }}
     http:
