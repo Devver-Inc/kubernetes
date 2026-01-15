@@ -1,0 +1,42 @@
+# Configuration de l'organisation et du projet
+organization:
+  name: "devver"  # Nom de l'organisation
+  domain: "devver.app"  # Domaine principal
+
+project:
+  name: "myapp"  # Nom du projet
+  displayName: "My App"  # Nom d'affichage
+
+# Configuration du conteneur (OS Linux complet ou application)
+container:
+  image: "ubuntu:22.04"  # Image du conteneur (OS Linux ou application)
+  port: 8080  # Port exposé par le conteneur
+  # Type de déploiement: "linux" pour un OS, "app" pour une application
+  type: "linux"
+  
+# Configuration des ressources
+resources:
+  requests:
+    memory: "128Mi"
+    cpu: "100m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+
+# Configuration de la persistance
+persistence:
+  enabled: true
+  size: "10Gi"
+  mountPath: "/data"  # Persiste tout le système de fichiers du conteneur
+
+# Configuration du nombre de replicas
+replicaCount: 1
+
+# Configuration des ports
+ports:
+  http: 80
+  https: 443
+
+# Labels et sélecteurs additionnels
+labels: {}
+annotations: {}

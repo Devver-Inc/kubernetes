@@ -1,0 +1,16 @@
+{{- if .Values.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "app-template.pvcName" . }}
+  namespace: {{ include "app-template.namespace" . }}
+  labels:
+    {{- include "app-template.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: {{ .Values.persistence.size }}
+{{- end }}
