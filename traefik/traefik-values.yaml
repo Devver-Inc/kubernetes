@@ -1,19 +1,9 @@
-# additionalArguments:
-#   - "--certificatesresolvers.cloudflare.acme.dnschallenge=true"
-#   - "--certificatesresolvers.cloudflare.acme.dnschallenge.provider=cloudflare"
-#   - "--certificatesresolvers.cloudflare.acme.email=info@devver.app"
-#   - "--certificatesresolvers.cloudflare.acme.storage=/data/acme.json"
-#   - "--entrypoints.websecure.http.tls.certresolver=cloudflare"
-
-certificatesResolvers:
-  cloudflare:
-    acme:
-      email: info@devver.app
-      storage: /data/acme.json
-      dnsChallenge:
-        provider: cloudflare
-
-
+additionalArguments:
+  - "--certificatesresolvers.cloudflare.acme.dnschallenge=true"
+  - "--certificatesresolvers.cloudflare.acme.dnschallenge.provider=cloudflare"
+  - "--certificatesresolvers.cloudflare.acme.email=info@devver.app"
+  - "--certificatesresolvers.cloudflare.acme.storage=/data/acme.json"
+  - "--entrypoints.websecure.http.tls.certresolver=cloudflare"
 
 
 
