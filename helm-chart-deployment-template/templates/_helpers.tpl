@@ -48,8 +48,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 Create the namespace name
 */}}
 {{- define "app-template.namespace" -}}
-{{- default "default" .Values.namespace }}
-#{{- printf "%s%s" .Values.organization.name .Values.project.name | trunc 63 | trimSuffix "-" }}
+{{- printf "%s%s" .Values.organization.name .Values.project.name | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
