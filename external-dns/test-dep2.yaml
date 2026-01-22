@@ -2,19 +2,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nginx-demo
+  name: nginx-demo2
   namespace: np-test
   labels:
-    app: nginx-demo
+    app: nginx-demo2
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: nginx-demo
+      app: nginx-demo2
   template:
     metadata:
       labels:
-        app: nginx-demo
+        app: nginx-demo2
     spec:
       containers:
       - name: nginx
@@ -25,11 +25,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: nginx-demo
+  name: nginx-demo2
   namespace: np-test
 spec:
   selector:
-    app: nginx-demo
+    app: nginx-demo2
   ports:
     - protocol: TCP
       port: 80
@@ -38,7 +38,7 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: nginx-demo-ingress
+  name: nginx-demo2-ingress
   namespace: np-test
   annotations:
     external-dns.alpha.kubernetes.io/target: reverse-proxy.vrhometech.fr
@@ -53,7 +53,7 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: nginx-demo
+            name: nginx-demo2
             port:
               number: 80
   tls:
