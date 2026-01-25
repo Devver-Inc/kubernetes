@@ -5,7 +5,7 @@ organization:
 
 project:
   name: "projtest"  # Nom du projet
-  displayName: "projtest"  # Nom d'affichage
+  #displayName: "projtest"  # Nom d'affichage
 
 # Configuration du conteneur (OS Linux complet ou application)
 container:
