@@ -11,12 +11,8 @@ project:
 container:
   image: "ubuntu/nginx"  # Image du conteneur (OS Linux ou application)
   port: 80  # Port exposé par le conteneur
-  # Type de déploiement: "linux" pour un OS, "app" pour une application
   type: "app"
-  # Commande pour démarrer l'application (laisser vide pour nginx)
-  # Pour nginx: laisser vide (image par défaut)
-  # Pour Ubuntu/Debian: ["sleep", "infinity"]
-  # Pour Apache: ["/usr/sbin/apache2ctl", "-D", "FOREGROUND"]
+  
   command: []
   args: []
   
@@ -33,7 +29,7 @@ resources:
 persistence:
   enabled: true
   size: "10Gi"
-  mountPath: "/data"  # Persiste tout le système de fichiers du conteneur
+  mountPath: "/data"  # Choix du répertoire à persister
 
 # Configuration du nombre de replicas
 replicaCount: 1
