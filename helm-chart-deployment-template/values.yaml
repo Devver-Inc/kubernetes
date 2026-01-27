@@ -33,7 +33,7 @@ resources:
 persistence:
   enabled: true
   size: "10Gi"
-  mountPath: "/"  # Persiste tout le système de fichiers du conteneur
+  mountPath: "/data"  # Persiste tout le système de fichiers du conteneur
 
 # Configuration du nombre de replicas
 replicaCount: 1
