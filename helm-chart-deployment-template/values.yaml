@@ -9,7 +9,7 @@ project:
 
 # Configuration du conteneur (OS Linux complet ou application)
 container:
-  image: "nginx:latest"  # Image du conteneur (OS Linux ou application)
+  image: "ubuntu/nginx"  # Image du conteneur (OS Linux ou application)
   port: 80  # Port exposé par le conteneur
   # Type de déploiement: "linux" pour un OS, "app" pour une application
   type: "app"
