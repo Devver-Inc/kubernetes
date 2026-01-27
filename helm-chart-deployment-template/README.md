@@ -4,6 +4,7 @@ https://helm.sh/docs/intro/install
 
 ## Import de la configuration du cluster K8s
 Importer la configuration du cluster avec la commande suivante:
+A faire sur le serveur de Backend
 ```
 export KUBECONFIG=/home/$HOME/backend-kubeconfig.yaml
 ```
