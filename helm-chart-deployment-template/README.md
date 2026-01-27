@@ -2,6 +2,13 @@
 
 https://helm.sh/docs/intro/install
 
+## Import de la configuration du cluster K8s
+Importer la configuration du cluster avec la commande suivante:
+```
+export KUBECONFIG=/home/$HOME/backend-kubeconfig.yaml
+```
+Permet à Helm de se connecter au cluster pour appliquer les instructions.
+
 ## Créer un déploiement
 
 Avec valeur par défaut (spécifié dans le values.yaml)
