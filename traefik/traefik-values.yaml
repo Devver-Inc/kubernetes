@@ -39,6 +39,23 @@ podSecurityContext:
 # aucune capability
 securityContext: {}
 
+extraInitContainers:
+  - name: fix-acme-perms
+    image: busybox
+    securityContext:
+      runAsUser: 0   # ROOT UNIQUEMENT POUR FIXER LES DROITS
+    command:
+      - sh
+      - -c
+      - |
+        mkdir -p /data
+        touch /data/acme.json
+        chown -R 65532:65532 /data
+        chmod 600 /data/acme.json
+    volumeMounts:
+      - mountPath: /data
+        name: data
+
 ingressClass:
   enabled: true
   isDefaultClass: true
