@@ -1,5 +1,7 @@
 additionalArguments:
   - "--providers.kubernetesingress=true"
+  - "--providers.kubernetesingress.ingressclass=traefik"
+  - "--providers.kubernetescrd=true"
   - "--entrypoints.websecure.address=:443"
   - "--certificatesresolvers.cloudflare.acme.email=info@devver.app"
   - "--certificatesresolvers.cloudflare.acme.storage=/data/acme.json"
