@@ -17,8 +17,8 @@ env:
 
 ports:
   websecure:
-    port: 8443        # port interne Traefik
-    exposedPort: 443  # port externe pour les clients
+    port: 8443
+    exposedPort: 443
     expose:
       default: true
 
@@ -33,28 +33,29 @@ persistence:
 podSecurityContext:
   runAsUser: 65532
   runAsGroup: 65532
-  fsGroup: null 
   runAsNonRoot: true
 
-# aucune capability
 securityContext: {}
 
-extraInitContainers:
-  - name: fix-acme-perms
-    image: busybox
-    securityContext:
-      runAsUser: 0   # ROOT UNIQUEMENT POUR FIXER LES DROITS
-    command:
-      - sh
-      - -c
-      - |
-        mkdir -p /data
-        touch /data/acme.json
-        chown -R 65532:65532 /data
-        chmod 600 /data/acme.json
-    volumeMounts:
-      - mountPath: /data
-        name: data
+deployment:
+  podTemplate:
+    spec:
+      initContainers:
+        - name: fix-acme-perms
+          image: busybox
+          securityContext:
+            runAsUser: 0
+          command:
+            - sh
+            - -c
+            - |
+              mkdir -p /data
+              touch /data/acme.json
+              chown -R 65532:65532 /data
+              chmod 600 /data/acme.json
+          volumeMounts:
+            - mountPath: /data
+              name: data
 
 ingressClass:
   enabled: true
