@@ -2,7 +2,7 @@ additionalArguments:
   - "--providers.kubernetesingress=true"
   - "--providers.kubernetesingress.ingressclass=traefik"
   - "--providers.kubernetescrd=true"
-  - "--entrypoints.websecure.address=:443"
+  - "--entrypoints.websecure.address=:8443"
   - "--certificatesresolvers.cloudflare.acme.email=info@devver.app"
   - "--certificatesresolvers.cloudflare.acme.storage=/data/acme.json"
   - "--certificatesresolvers.cloudflare.acme.dnschallenge=true"
@@ -15,6 +15,13 @@ env:
         name: cloudflare-dns
         key: CF_DNS_API_TOKEN
 
+ports:
+  websecure:
+    port: 8443        # port interne Traefik
+    exposedPort: 443  # port externe pour les clients
+    expose:
+      default: true
+
 persistence:
   enabled: true
   name: data
@@ -23,38 +30,14 @@ persistence:
   accessMode: ReadWriteOnce
   storageClass: longhorn
 
-# Sécurité au niveau du pod
 podSecurityContext:
+  runAsUser: 65532
+  runAsGroup: 65532
   fsGroup: 65532
-  fsGroupChangePolicy: "OnRootMismatch"
-  capabilities:
-    add:
-      - NET_BIND_SERVICE
+  runAsNonRoot: true
 
-# Déploiement / container securityContext via podTemplate
-deployment:
-  podTemplate:
-    spec:
-      securityContext:
-        runAsUser: 65532
-        runAsGroup: 65532
-        runAsNonRoot: true
-        capabilities:
-          add:
-            - NET_BIND_SERVICE
-      lifecycle:
-        postStart:
-          exec:
-            command:
-              - sh
-              - -c
-              - |
-                touch /data/acme.json
-                chmod 600 /data/acme.json
-
-ports:
-  websecure:
-    port: 443
+# aucune capability
+securityContext: {}
 
 ingressClass:
   enabled: true
