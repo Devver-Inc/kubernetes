@@ -41,36 +41,14 @@ entryPoints:
         - "192.168.20.5/32"
 
 
+podSecurityContext:
+  fsGroup: 65532
+  fsGroupChangePolicy: "Always"
+
 initContainers:
   - name: init-acme
     image: busybox
-    command:
-      - sh
-      - -c
-      - |
-        chown 65532:65532 /data
-        touch /data/acme.json
-        chown 65532:65532 /data/acme.json
-        chmod 600 /data/acme.json
+    command: ["sh", "-c", "touch /data/acme.json && chmod 600 /data/acme.json"]
     volumeMounts:
       - mountPath: /data
         name: data
-        
-securityContext:
-  runAsUser: 65532
-  runAsGroup: 65532
-  runAsNonRoot: true
-
-
-
-# podSecurityContext:
-#   fsGroup: 65532
-#   fsGroupChangePolicy: "Always"
-
-# initContainers:
-#   - name: init-acme
-#     image: busybox
-#     command: ["sh", "-c", "touch /data/acme.json && chmod 600 /data/acme.json"]
-#     volumeMounts:
-#       - mountPath: /data
-#         name: data
