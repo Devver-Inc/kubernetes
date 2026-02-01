@@ -32,30 +32,31 @@ securityContext:
   runAsGroup: 65532
   runAsNonRoot: true
 
-initContainers:
-  - name: init-acme
-    image: busybox
-    securityContext:
-      runAsUser: 0
-    command:
-      - sh
-      - -c
-      - |
-        chown -R 65532:65532 /data
-        touch /data/acme.json
-        chown 65532:65532 /data/acme.json
-        chmod 600 /data/acme.json
-    volumeMounts:
-      - mountPath: /data
-        name: data
+deployment:
+  initContainers:
+    - name: init-acme
+      image: busybox
+      securityContext:
+        runAsUser: 0
+      command:
+        - sh
+        - -c
+        - |
+          chown -R 65532:65532 /data
+          touch /data/acme.json
+          chown 65532:65532 /data/acme.json
+          chmod 600 /data/acme.json
+      volumeMounts:
+        - mountPath: /data
+          name: data
+
 
 ports:
   web:
     port: 80
   websecure:
     port: 443
-    tls:
-      enabled: true
+
 
 ingressClass:
   enabled: true
