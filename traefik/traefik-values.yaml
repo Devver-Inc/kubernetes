@@ -1,13 +1,6 @@
-# traefik-values.yaml minimaliste HTTPS-only
-
 additionalArguments:
-  # Activer le provider Kubernetes Ingress
   - "--providers.kubernetesingress=true"
-
-  # Définir l'entrypoint HTTPS
   - "--entrypoints.websecure.address=:443"
-
-  # ACME Cloudflare
   - "--certificatesresolvers.cloudflare.acme.email=info@devver.app"
   - "--certificatesresolvers.cloudflare.acme.storage=/data/acme.json"
   - "--certificatesresolvers.cloudflare.acme.dnschallenge=true"
@@ -20,7 +13,6 @@ env:
         name: cloudflare-dns
         key: CF_DNS_API_TOKEN
 
-# Persistance ACME
 persistence:
   enabled: true
   name: data
@@ -29,40 +21,36 @@ persistence:
   accessMode: ReadWriteOnce
   storageClass: longhorn
 
-# Sécurité pod
+# Sécurité au niveau du pod
 podSecurityContext:
   fsGroup: 65532
   fsGroupChangePolicy: "OnRootMismatch"
 
-securityContext:
-  runAsUser: 65532
-  runAsGroup: 65532
-  runAsNonRoot: true
-
-# Capabilities pour binder le port 443 en non-root
-containerSecurityContext:
-  capabilities:
-    add:
-      - NET_BIND_SERVICE
-
-# Déploiement lifecycle pour créer acme.json si absent
+# Déploiement / container securityContext via podTemplate
 deployment:
-  lifecycle:
-    postStart:
-      exec:
-        command:
-          - sh
-          - -c
-          - |
-            touch /data/acme.json
-            chmod 600 /data/acme.json
+  podTemplate:
+    spec:
+      securityContext:
+        runAsUser: 65532
+        runAsGroup: 65532
+        runAsNonRoot: true
+        capabilities:
+          add:
+            - NET_BIND_SERVICE
+      lifecycle:
+        postStart:
+          exec:
+            command:
+              - sh
+              - -c
+              - |
+                touch /data/acme.json
+                chmod 600 /data/acme.json
 
-# Ports exposés
 ports:
   websecure:
     port: 443
 
-# Classe Ingress
 ingressClass:
   enabled: true
   isDefaultClass: true
