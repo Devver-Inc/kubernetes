@@ -48,12 +48,18 @@ initContainers:
       - sh
       - -c
       - |
+        chown 65532:65532 /data
         touch /data/acme.json
         chown 65532:65532 /data/acme.json
         chmod 600 /data/acme.json
     volumeMounts:
       - mountPath: /data
         name: data
+        
+securityContext:
+  runAsUser: 65532
+  runAsGroup: 65532
+  runAsNonRoot: true
 
 
 
