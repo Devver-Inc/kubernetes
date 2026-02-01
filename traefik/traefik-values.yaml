@@ -1,7 +1,5 @@
 additionalArguments:
   - "--providers.kubernetesingress=true"
-  - "--providers.kubernetescrd=false"
-
   - "--entrypoints.web.address=:80"
   - "--entrypoints.websecure.address=:443"
 
@@ -9,8 +7,6 @@ additionalArguments:
   - "--certificatesresolvers.cloudflare.acme.storage=/data/acme.json"
   - "--certificatesresolvers.cloudflare.acme.dnschallenge=true"
   - "--certificatesresolvers.cloudflare.acme.dnschallenge.provider=cloudflare"
-
-  - "--log.level=INFO"
 
 env:
   - name: CF_DNS_API_TOKEN
@@ -22,10 +18,14 @@ env:
 persistence:
   enabled: true
   name: data
-  accessMode: ReadWriteOnce
-  size: 1Gi
   path: /data
+  size: 1Gi
+  accessMode: ReadWriteOnce
   storageClass: longhorn
+
+podSecurityContext:
+  fsGroup: 65532
+  fsGroupChangePolicy: "OnRootMismatch"
 
 securityContext:
   runAsUser: 65532
@@ -33,30 +33,21 @@ securityContext:
   runAsNonRoot: true
 
 deployment:
-  initContainers:
-    - name: init-acme
-      image: busybox
-      securityContext:
-        runAsUser: 0
-      command:
-        - sh
-        - -c
-        - |
-          chown -R 65532:65532 /data
-          touch /data/acme.json
-          chown 65532:65532 /data/acme.json
-          chmod 600 /data/acme.json
-      volumeMounts:
-        - mountPath: /data
-          name: data
-
+  lifecycle:
+    postStart:
+      exec:
+        command:
+          - sh
+          - -c
+          - |
+            touch /data/acme.json
+            chmod 600 /data/acme.json
 
 ports:
   web:
     port: 80
   websecure:
     port: 443
-
 
 ingressClass:
   enabled: true
