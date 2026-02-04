@@ -8,14 +8,15 @@ metadata:
   annotations:
     external-dns.alpha.kubernetes.io/target: "reverse-proxy.vrhometech.fr"
     traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
-    traefik.ingress.kubernetes.io/router.tls.certresolver: cloudflare
-    traefik.ingress.kubernetes.io/router.tls: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
 
 spec:
   ingressClassName: traefik
   tls:
   - hosts:
       - {{ include "app-template.hostname" . }}
+    secretName: {{ include "app-template.fullname" . }}-tls
+
   rules:
   - host: {{ include "app-template.hostname" . }}
     http:
