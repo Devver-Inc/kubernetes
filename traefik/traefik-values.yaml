@@ -2,9 +2,23 @@ additionalArguments:
   - "--providers.kubernetesingress=true"
   - "--providers.kubernetesingress.ingressclass=traefik"
   - "--providers.kubernetescrd=true"
+
+  # entrypoints
+  - "--entrypoints.web.address=:8080"
   - "--entrypoints.websecure.address=:8443"
 
+  # redirection automatique
+  - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+  - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+
 ports:
+
+  web:
+    port: 8080
+    exposedPort: 80
+    expose:
+      default: true
+
   websecure:
     port: 8443
     exposedPort: 443
