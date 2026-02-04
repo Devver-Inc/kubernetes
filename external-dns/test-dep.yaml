@@ -43,6 +43,7 @@ metadata:
   annotations:
     external-dns.alpha.kubernetes.io/target: reverse-proxy.vrhometech.fr
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
 spec:
   ingressClassName: traefik
   rules:
@@ -59,3 +60,4 @@ spec:
   tls:
   - hosts:
       - test2.k8s.devver.app
+    secretName: nginx-demo-tls

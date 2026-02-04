@@ -1,54 +1,17 @@
 additionalArguments:
-  - "--certificatesresolvers.cloudflare.acme.dnschallenge=true"
-  - "--certificatesresolvers.cloudflare.acme.dnschallenge.provider=cloudflare"
-  - "--certificatesresolvers.cloudflare.acme.email=info@devver.app"
-  - "--certificatesresolvers.cloudflare.acme.storage=/data/acme.json"
-  - "--entrypoints.websecure.http.tls.certresolver=cloudflare"
-
-
-
-env:
-  - name: CF_DNS_API_TOKEN
-    valueFrom:
-      secretKeyRef:
-        name: cloudflare-dns
-        key: CF_DNS_API_TOKEN
-
-persistence:
-  enabled: true
-  name: data
-  accessMode: ReadWriteOnce
-  size: 1Gi
-  path: /data
-  annotations: {}
-  storageClass: "longhorn"
-
-dashboard:
-  enabled: false
+  - "--providers.kubernetesingress=true"
+  - "--providers.kubernetesingress.ingressclass=traefik"
+  - "--providers.kubernetescrd=true"
+  - "--entrypoints.websecure.address=:8443"
 
 ports:
-  web:
-#    redirected: true
   websecure:
-    tls:
-      enabled: true
+    port: 8443
+    exposedPort: 443
+    expose:
+      default: true
 
-entryPoints:
-  websecure:
-    address: ":443"
-    proxyProtocol:
-      trustedIPs:
-        - "192.168.20.5/32"
-
-
-podSecurityContext:
-  fsGroup: 65532
-  fsGroupChangePolicy: "Always"
-
-initContainers:
-  - name: init-acme
-    image: busybox
-    command: ["sh", "-c", "touch /data/acme.json && chmod 600 /data/acme.json"]
-    volumeMounts:
-      - mountPath: /data
-        name: data
+ingressClass:
+  enabled: true
+  isDefaultClass: true
+  name: traefik
