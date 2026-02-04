@@ -14,7 +14,7 @@ additionalArguments:
 ports:
 
   web:
-    port: 8080
+    port: 9080
     exposedPort: 80
     expose:
       default: true
