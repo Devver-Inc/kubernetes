@@ -3,17 +3,6 @@ additionalArguments:
   - "--providers.kubernetesingress.ingressclass=traefik"
   - "--providers.kubernetescrd=true"
   - "--entrypoints.websecure.address=:8443"
-  - "--certificatesresolvers.cloudflare.acme.email=info@devver.app"
-  - "--certificatesresolvers.cloudflare.acme.storage=/data/acme.json"
-  - "--certificatesresolvers.cloudflare.acme.dnschallenge=true"
-  - "--certificatesresolvers.cloudflare.acme.dnschallenge.provider=cloudflare"
-
-env:
-  - name: CF_DNS_API_TOKEN
-    valueFrom:
-      secretKeyRef:
-        name: cloudflare-dns
-        key: CF_DNS_API_TOKEN
 
 ports:
   websecure:
@@ -21,41 +10,6 @@ ports:
     exposedPort: 443
     expose:
       default: true
-
-persistence:
-  enabled: true
-  name: data
-  path: /data
-  size: 1Gi
-  accessMode: ReadWriteOnce
-  storageClass: longhorn
-
-# 👉 ON SUPPRIME le non-root
-podSecurityContext: {}
-
-securityContext: {}
-
-deployment:
-  podTemplate:
-    spec:
-      initContainers:
-        - name: fix-acme-perms
-          image: busybox
-          securityContext:
-            runAsUser: 0
-          command:
-            - sh
-            - -c
-            - |
-              mkdir -p /data
-              chown -R 65532:65532 /data
-              chmod 700 /data
-              touch /data/acme.json
-              chmod 600 /data/acme.json
-          volumeMounts:
-            - mountPath: /data
-              name: data
-
 
 ingressClass:
   enabled: true
