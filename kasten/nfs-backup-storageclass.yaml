@@ -9,5 +9,5 @@ parameters:
 mountOptions:
   - vers=3
   - nolock
-reclaimPolicy: Retain
+reclaimPolicy: Delete
 volumeBindingMode: Immediate
