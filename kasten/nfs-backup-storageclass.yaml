@@ -6,6 +6,7 @@ provisioner: nfs.csi.k8s.io
 parameters:
   server: 192.168.10.5
   share: /volume1/NFS_K8S_DEVVER_BACKUP
+  onDelete: archive
 mountOptions:
   - vers=3
   - nolock
