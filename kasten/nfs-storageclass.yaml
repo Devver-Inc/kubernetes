@@ -1,0 +1,13 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: nfs-backup
+provisioner: nfs.csi.k8s.io
+parameters:
+  server: 192.168.10.5
+  share: /volume1/NFS_K8S_DEVVER_BACKUP
+mountOptions:
+  - vers=3
+  - nolock
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
