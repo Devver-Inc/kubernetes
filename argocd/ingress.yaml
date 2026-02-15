@@ -6,7 +6,7 @@ metadata:
   annotations:
     external-dns.alpha.kubernetes.io/target: reverse-proxy.vrhometech.fr
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+    traefik.ingress.kubernetes.io/service.serversscheme: https
 spec:
   ingressClassName: traefik
   rules:
@@ -23,4 +23,4 @@ spec:
   tls:
   - hosts:
       - argocd.k8s.devver.app
-    secretName: argocd-tls
+    secretName: argocd-server-tls
