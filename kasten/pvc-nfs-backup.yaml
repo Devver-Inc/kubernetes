@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-kasten-backup  # NOM EXACT de l'erreur
+  namespace: kasten-io
+spec:
+  storageClassName: nfs-backup  # TA StorageClass
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Gi
