@@ -9,7 +9,8 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-cloudflare
     # Traefik sait que le service est HTTP
     traefik.ingress.kubernetes.io/service.serversscheme: http
-    external-dns.alpha.kubernetes.io/hostname: argocd.k8s.devver.app
+    external-dns.alpha.kubernetes.io/target: reverse-proxy.vrhometech.fr
+
 spec:
   ingressClassName: traefik
   rules:
