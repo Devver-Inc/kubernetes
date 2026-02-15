@@ -4,9 +4,12 @@ metadata:
   name: argocd-ingress
   namespace: argocd
   annotations:
-    external-dns.alpha.kubernetes.io/target: reverse-proxy.vrhometech.fr
+    kubernetes.io/ingress.class: traefik
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/service.serversscheme: https
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+    # Traefik sait que le service est HTTP
+    traefik.ingress.kubernetes.io/service.serversscheme: http
+    external-dns.alpha.kubernetes.io/hostname: argocd.k8s.devver.app
 spec:
   ingressClassName: traefik
   rules:
@@ -19,8 +22,8 @@ spec:
           service:
             name: argocd-server
             port:
-              number: 443
+              number: 80   # ArgoCD écoute HTTP en interne
   tls:
   - hosts:
       - argocd.k8s.devver.app
-    secretName: argocd-server-tls
+    secretName: argocd-tls-public  # secret créé automatiquement par cert-manager
