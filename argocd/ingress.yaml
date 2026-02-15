@@ -7,12 +7,12 @@ metadata:
     kubernetes.io/ingress.class: traefik
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     cert-manager.io/cluster-issuer: letsencrypt-cloudflare
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
   ingressClassName: traefik
   rules:
-  - http:
+  - host: argocd.k8s.devver.app
+    http:
       paths:
       - path: /
         pathType: Prefix
@@ -20,10 +20,8 @@ spec:
           service:
             name: argocd-server
             port:
-              name: http
-    host: argocd.k8s.devver.app
+              number: 443
   tls:
   - hosts:
-    - argocd.k8s.devver.app
-    secretName: argocd-ingress-http
-
+      - argocd.k8s.devver.app
+    secretName: argocd-tls
