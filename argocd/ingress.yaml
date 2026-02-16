@@ -4,11 +4,8 @@ metadata:
   name: argocd-ingress
   namespace: argocd
   annotations:
-    kubernetes.io/ingress.class: traefik
+    external-dns.alpha.kubernetes.io/target: reverse-proxy.vrhometech.fr
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.tls: "true"
-    traefik.ingress.kubernetes.io/router.tls.insecureSkipVerify: "true" # ignore le TLS interne auto-signé
-    traefik.ingress.kubernetes.io/router.middlewares: argocd-headers@kubernetescrd
     cert-manager.io/cluster-issuer: letsencrypt-cloudflare
 spec:
   ingressClassName: traefik
@@ -22,7 +19,7 @@ spec:
           service:
             name: argocd-server
             port:
-              number: 443
+              number: 80
   tls:
   - hosts:
       - argocd.k8s.devver.app
