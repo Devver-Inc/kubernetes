@@ -1,0 +1,43 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: devver-client-deployment
+  namespace: argocd
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/Devver-Inc/argocd-client-deployment.git
+        revision: main
+        directories:
+          - path: "*/*"   # clientX/projetX
+
+  template:
+    metadata:
+      name: "{{path[0]}}-{{path[1]}}"
+    spec:
+      project: default
+
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{organization.name}}{{project.name}}" # OU via values
+
+      sources:
+        # Repo Helm chart
+        - repoURL: https://github.com/Devver-Inc/kubernetes.git
+          targetRevision: main
+          path: chart-app-template
+          helm:
+            valueFiles:
+              - $values/{{path[0]}}/{{path[1]}}/values.yaml
+
+        # Repo values
+        - repoURL: https://github.com/Devver-Inc/argocd-client-deployment.git
+          targetRevision: main
+          ref: values
+
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
