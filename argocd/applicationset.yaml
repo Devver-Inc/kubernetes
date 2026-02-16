@@ -19,7 +19,6 @@ spec:
 
       destination:
         server: https://kubernetes.default.svc
-        #namespace: "{{organization.name}}{{project.name}}" # OU via values
 
       sources:
         # Repo Helm chart
