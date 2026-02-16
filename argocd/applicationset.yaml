@@ -25,7 +25,7 @@ spec:
         # Repo Helm chart
         - repoURL: https://github.com/Devver-Inc/kubernetes.git
           targetRevision: main
-          path: chart-app-template
+          path: helm-chart-deployment-template
           helm:
             valueFiles:
               - $values/{{path[0]}}/{{path[1]}}/values.yaml
