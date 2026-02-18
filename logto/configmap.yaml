@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logto-config
+  namespace: devver-logto
+data:
+  ENDPOINT: "https://auth.k8s.devver.app"
+  ADMIN_ENDPOINT: "https://logto.k8s.devver.app"
