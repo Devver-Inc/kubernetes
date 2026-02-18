@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend-app
-  namespace: devver-landing-page
+  namespace: devver-frontend-app
 spec:
   replicas: 1
   selector:
