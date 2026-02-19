@@ -10,7 +10,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-  - host: kasten.k8s.devver.app
+  - host: kasten.devver.app
     http:
       paths:
       - path: /
@@ -22,5 +22,5 @@ spec:
               number: 80
   tls:
   - hosts:
-      - kasten.k8s.devver.app
+      - kasten.devver.app
     secretName: kasten-tls

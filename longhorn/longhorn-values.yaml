@@ -18,7 +18,7 @@ ui:
 
 ingress:
   enabled: true
-  host: longhorn.k8s.devver.app
+  host: longhorn.devver.app
   ingressClassName: traefik
   annotations:
     external-dns.alpha.kubernetes.io/target: reverse-proxy.vrhometech.fr
@@ -26,7 +26,7 @@ ingress:
     cert-manager.io/cluster-issuer: letsencrypt-cloudflare
   tls:
     - hosts:
-        - longhorn.k8s.devver.app
+        - longhorn.devver.app
   secretName: longhorn-tls
   tlsSecret: longhorn-tls
 
