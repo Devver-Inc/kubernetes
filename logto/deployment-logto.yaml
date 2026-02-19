@@ -17,7 +17,10 @@ spec:
         - name: logto
           image: svhd/logto:latest  
           command: ["sh", "-c"]
-          args: ["npm run cli db seed -- --swe && npm start"]
+          args:
+            - |
+              export DB_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@logto-postgres-svc:5432/logto"
+              npm run cli db seed -- --swe && npm start
           env:
             - name: TRUST_PROXY_HEADER
               value: "1"
@@ -31,9 +34,6 @@ spec:
                 secretKeyRef:
                   name: logto-postgres-secret
                   key: POSTGRES_PASSWORD
-            - name: DB_URL
-              value: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@logto-postgres-svc:5432/logto"
-
             - name: ENDPOINT
               valueFrom:
                 configMapKeyRef:
@@ -55,7 +55,6 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 3
             failureThreshold: 3
-      # Assurez-vous que l'app attend Postgres
       initContainers:
         - name: wait-for-postgres
           image: busybox:1.36
