@@ -10,7 +10,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-  - host: uptime-kuma.k8s.devver.app
+  - host: uptime-kuma.devver.app
     http:
       paths:
       - path: /
@@ -22,5 +22,5 @@ spec:
               number: 80
   tls:
   - hosts:
-      - uptime-kuma.k8s.devver.app
+      - uptime-kuma.devver.app
     secretName: uptime-kuma-tls
