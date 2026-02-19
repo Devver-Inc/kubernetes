@@ -4,5 +4,5 @@ metadata:
   name: logto-config
   namespace: devver-logto
 data:
-  ENDPOINT: "https://auth.k8s.devver.app"
-  ADMIN_ENDPOINT: "https://logto.k8s.devver.app"
+  ENDPOINT: "https://auth.devver.app"
+  ADMIN_ENDPOINT: "https://logto.devver.app"
