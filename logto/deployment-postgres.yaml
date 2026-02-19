@@ -32,7 +32,7 @@ spec:
           readinessProbe:
             exec:
               command:
-                - pg_isready
+                - pg_isready -U postgres
             initialDelaySeconds: 5
             periodSeconds: 5
             timeoutSeconds: 5
