@@ -22,7 +22,7 @@ spec:
             - name: TRUST_PROXY_HEADER
               value: "1"
             - name: DB_URL
-              value: "postgres://postgres:p0stgr3s@logto-postgres:5432/logto"
+              value: "postgres://postgres:p0stgr3s@logto-postgres-svc:5432/logto"
             - name: ENDPOINT
               valueFrom:
                 configMapKeyRef:
@@ -48,4 +48,4 @@ spec:
       initContainers:
         - name: wait-for-postgres
           image: busybox:1.36
-          command: ['sh', '-c', 'until nc -z logto-postgres 5432; do echo waiting for postgres; sleep 2; done;']
+          command: ['sh', '-c', 'until nc -z logto-postgres-svc 5432; do echo waiting for postgres; sleep 2; done;']
