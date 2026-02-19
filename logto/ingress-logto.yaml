@@ -10,7 +10,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-  - host: logto.k8s.devver.app
+  - host: logto.devver.app
     http:
       paths:
       - path: /
@@ -22,5 +22,5 @@ spec:
               number: 3001
   tls:
   - hosts:
-      - logto.k8s.devver.app
+      - logto.devver.app
     secretName: logto-tls
