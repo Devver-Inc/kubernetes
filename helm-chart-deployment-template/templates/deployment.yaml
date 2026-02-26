@@ -42,12 +42,17 @@ spec:
             cpu: {{ .Values.resources.limits.cpu }}
         {{- if .Values.persistence.enabled }}
         volumeMounts:
-        - name: data
-          mountPath: {{ .Values.persistence.mountPath }}
+        - name: {{ include "app-template.pvcNameApp" . }}
+          mountPath: {{ .Values.persistence.app.mountPath }}
+        - name: {{ include "app-template.pvcNameRoot" . }}
+          mountPath: {{ .Values.persistence.root.mountPath }}
         {{- end }}
       {{- if .Values.persistence.enabled }}
       volumes:
-      - name: data
+      - name: {{ include "app-template.pvcNameApp" . }}
         persistentVolumeClaim:
-          claimName: {{ include "app-template.pvcName" . }}
+          claimName: {{ include "app-template.pvcNameApp" . }}
+      - name: {{ include "app-template.pvcNameRoot" . }}
+        persistentVolumeClaim:
+          claimName: {{ include "app-template.pvcNameRoot" . }}
       {{- end }}
