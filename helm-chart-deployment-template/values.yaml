@@ -28,8 +28,14 @@ resources:
 # Configuration de la persistance
 persistence:
   enabled: true
-  size: "10Gi"
-  mountPath: "/data"  # Choix du répertoire à persister
+  app:
+    size: "10Gi"
+    mountPath: "/app"
+    storageClass: longhorn
+  root:
+    size: "5Gi"
+    mountPath: "/root"
+    storageClass: longhorn
 
 # Configuration du nombre de replicas
 replicaCount: 1

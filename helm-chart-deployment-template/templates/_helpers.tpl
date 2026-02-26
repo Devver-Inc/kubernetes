@@ -64,5 +64,20 @@ Create the full hostname for the ingress
 Create the PVC name
 */}}
 {{- define "app-template.pvcName" -}}
-{{- printf "%s-pvc" (include "app-template.fullname" .) }}
+{{- $ctx := .context }}
+{{- if not $ctx }}
+{{- $ctx = . }}
+{{- end }}
+{{- $name := .name | default "data" }}
+{{- printf "%s-%s" (include "app-template.fullname" $ctx) $name | trunc 63 | trimSuffix "-" -}}
+{{- end }}
+
+{{/* Explicit PVC name for `app` */}}
+{{- define "app-template.pvcNameApp" -}}
+{{- printf "%s-app" (include "app-template.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end }}
+
+{{/* Explicit PVC name for `root` */}}
+{{- define "app-template.pvcNameRoot" -}}
+{{- printf "%s-root" (include "app-template.fullname" .) | trunc 63 | trimSuffix "-" -}}
 {{- end }}
