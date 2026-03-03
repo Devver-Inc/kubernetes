@@ -9,6 +9,7 @@ metadata:
   name: uptime-kuma-pvc
   namespace: devver-uptime-kuma
 spec:
+  storageClassName: longhorn
   accessModes:
     - ReadWriteOnce
   resources:

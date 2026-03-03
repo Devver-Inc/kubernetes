@@ -27,6 +27,8 @@ spec:
                 secretKeyRef:
                   name: logto-postgres-secret
                   key: POSTGRES_PASSWORD
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
           ports:
             - containerPort: 5432
           readinessProbe:
@@ -39,3 +41,10 @@ spec:
             periodSeconds: 5
             timeoutSeconds: 5
             failureThreshold: 5
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: logto-postgres-pvc
