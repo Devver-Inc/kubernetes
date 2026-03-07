@@ -7,34 +7,25 @@ metadata:
   labels:
     {{- include "app-template.labels" . | nindent 4 }}
 spec:
-  {{- if .Values.persistence.enabled }}
-  apiVersion: v1
-  kind: PersistentVolumeClaim
-  metadata:
-    name: {{ include "app-template.pvcNameApp" . }}
-    namespace: {{ include "app-template.namespace" . }}
-    labels:
-      {{- include "app-template.labels" . | nindent 4 }}
-  spec:
-    accessModes:
-      - ReadWriteOnce
-    storageClassName: {{ .Values.persistence.app.storageClass | default "longhorn" }}
-    resources:
-      requests:
-        storage: {{ .Values.persistence.app.size }}
-  ---
-  apiVersion: v1
-  kind: PersistentVolumeClaim
-  metadata:
-    name: {{ include "app-template.pvcNameRoot" . }}
-    namespace: {{ include "app-template.namespace" . }}
-    labels:
-      {{- include "app-template.labels" . | nindent 4 }}
-  spec:
-    accessModes:
-      - ReadWriteOnce
-    storageClassName: {{ .Values.persistence.root.storageClass | default "longhorn" }}
-    resources:
-      requests:
-        storage: {{ .Values.persistence.root.size }}
-  {{- end }}
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ .Values.persistence.app.storageClass | default "longhorn" }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.app.size }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "app-template.pvcNameRoot" . }}
+  namespace: {{ include "app-template.namespace" . }}
+  labels:
+    {{- include "app-template.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ .Values.persistence.root.storageClass | default "longhorn" }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.root.size }}
+{{- end }}
