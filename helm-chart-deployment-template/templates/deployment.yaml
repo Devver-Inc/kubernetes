@@ -26,7 +26,7 @@ spec:
       containers:
       - name: {{ .Values.project.name }}
         image: {{ .Values.container.image }}
-        imagePullPolicy: always
+        imagePullPolicy: Always
         {{- if .Values.container.command }}
         command: {{ toJson .Values.container.command }}
         {{- end }}
