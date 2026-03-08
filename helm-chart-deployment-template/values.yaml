@@ -15,9 +15,12 @@ container:
   image: "ghcr.io/devver-inc/deploy-agent:latest"  # Image du conteneur (OS Linux ou application)
   port: 80  # Port exposé par le conteneur
   type: "app"
-  
   command: []
   args: []
+
+  env:
+    DEVVER_SECRET: ""
+    NODE_ENV: "production"
   
 # Configuration des ressources
 resources:
@@ -51,3 +54,6 @@ ports:
 # Labels et sélecteurs additionnels
 labels: {}
 annotations: {}
+
+
+  

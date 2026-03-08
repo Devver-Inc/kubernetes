@@ -37,6 +37,15 @@ spec:
         - name: http
           containerPort: {{ .Values.container.port }}
           protocol: TCP
+        
+        {{- if .Values.container.env }}
+        env:
+        {{- range $key, $value := .Values.container.env }}
+        - name: {{ $key }}
+          value: {{ $value | quote }}
+        {{- end }}
+        {{- end }}
+        
         resources:
           requests:
             memory: {{ .Values.resources.requests.memory }}
