@@ -20,6 +20,12 @@ spec:
       destination:
         server: https://kubernetes.default.svc
 
+      ignoreDifferences:
+        - kind: Secret
+          name: ghcr-secret
+          jsonPointers:
+            - /data
+            - /metadata/annotations
       sources:
         # Repo Helm chart
         - repoURL: https://github.com/Devver-Inc/kubernetes.git
