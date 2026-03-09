@@ -1,10 +1,10 @@
 # Configuration de l'organisation et du projet
 organization:
-  name: "orgt2"  # Nom de l'organisation
+  name: "orgt1"  # Nom de l'organisation
   domain: "devver.app"  # Domaine principal
 
 project:
-  name: "projt2"  # Nom du projet
+  name: "projt1"  # Nom du projet
   #displayName: "projtest"  # Nom d'affichage
 
 imagePullSecrets:
