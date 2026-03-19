@@ -17,27 +17,31 @@ Create chart name and version as used by the chart label.
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 {{/*
+{{/*
 Common labels
 */}}
 {{- define "app-template.labels" -}}
-helm.sh/chart: {{ include "app-template.chart" . }}
-{{ include "app-template.selectorLabels" . }}
+helm.sh/chart: "{{ include "app-template.chart" . }}"
+{{- include "app-template.selectorLabels" . | nindent 0 }}
 {{- if .Chart.AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
 {{- end }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
-organization: {{ .Values.organization.name }}
-project: {{ .Values.project.name }}
+app.kubernetes.io/managed-by: "{{ .Release.Service }}"
+organization: "{{ .Values.organization.name }}"
+project: "{{ .Values.project.name }}"
 {{- with .Values.labels }}
-{{ toYaml . }}
+{{- range $key, $value := . }}
+{{ $key }}: "{{ $value }}"
 {{- end }}
 {{- end }}
+{{- end }}
+
 {{/*
 Selector labels
 */}}
 {{- define "app-template.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "app-template.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/name: "{{ include "app-template.name" . }}"
+app.kubernetes.io/instance: "{{ .Release.Name }}"
 {{- end }}
 {{/*
 Create the namespace name
