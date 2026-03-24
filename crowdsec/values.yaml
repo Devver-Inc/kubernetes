@@ -17,14 +17,14 @@ agent:
     - name: COLLECTIONS
       value: "crowdsecurity/traefik"
 lapi:
-env:
-# To enroll the Security Engine to the console
-- name: ENROLL_KEY
-  value: 'cmmi2tew3000502ju7pgsd6ze'
-- name: ENROLL_INSTANCE_NAME
-  value: 'my-k8s-cluster'
-- name: ENROLL_TAGS
-  value: 'k8s linux test'
+  env:
+  # To enroll the Security Engine to the console
+  - name: ENROLL_KEY
+    value: ''
+  - name: ENROLL_INSTANCE_NAME
+    value: 'devver-K8s-cluster'
+  - name: ENROLL_TAGS
+    value: 'Devver Prod K8s'
 
 ## config.yaml.local is the configuration file used by the Security Engine itself
 config:
@@ -44,12 +44,13 @@ config:
             - "10.0.0.0/8"
             - "172.16.0.0/12"
     # Using a database is strongly encouraged.
-    db_config:
-      type: postgresql
-      user: crowdsec
-      password: ${DB_PASSWORD}
-      db_name: crowdsec
-      host: <database-host>
-      flush:
-        bouncers_autodelete:
-          api_key: 1h
+    # db_config:
+    #   type: postgresql
+    #   user: crowdsec
+    #   password: ${DB_PASSWORD}
+    #   db_name: crowdsec
+    #   host: <database-host>
+    #   port: 5432
+    #   flush:
+    #     bouncers_autodelete:
+    #       api_key: 1h
