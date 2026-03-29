@@ -6,3 +6,4 @@ metadata:
 data:
   accounts.backend-api: apiKey
   accounts.backend-api.enabled: "true"
+  timeout.reconciliation: "30s"
