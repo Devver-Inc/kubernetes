@@ -5,4 +5,4 @@ metadata:
   namespace: argocd
 data:
   policy.csv: |
-    p, backend-api, applications, get, */*, allow
+    p, backend-api, applications, *, */*, allow
