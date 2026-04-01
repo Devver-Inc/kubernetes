@@ -17,6 +17,10 @@ Cela élimine la gestion manuelle des entrées DNS lors des déploiements.
 
 ## Installation
 
+kubectl create secret generic cloudflare-api-key \
+--from-literal=apiKey=mycloudflareapikey12345 \
+-n external-dns
+
 ```bash
 helm repo add external-dns https://kubernetes-sigs.github.io/external-dns/
 helm install external-dns external-dns/external-dns -n external-dns --create-namespace \

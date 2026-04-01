@@ -21,8 +21,11 @@ sources:
 # ----------------------------------------------------------------
 # FILTRAGE DES DOMAINES
 # ----------------------------------------------------------------
+extraArgs:
+  - --zone-id-filter=59bfc1325647f997bb04840ebdb5a163
+
 domainFilters:
-  - "devver.app"
+  - "bk.devver.app"
 
 # ----------------------------------------------------------------
 # MODE DE SYNCHRONISATION
