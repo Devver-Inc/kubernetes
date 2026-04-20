@@ -1,0 +1,53 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minio-api-ingress
+  namespace: devver-minio
+  annotations:
+    external-dns.alpha.kubernetes.io/target: reverse-proxy.vrhometech.fr
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: minio-api.devver.app
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: minio-api-svc
+                port:
+                  number: 9000
+  tls:
+    - hosts:
+        - minio-api.devver.app
+      secretName: minio-api-tls
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minio-console-ingress
+  namespace: devver-minio
+  annotations:
+    external-dns.alpha.kubernetes.io/target: reverse-proxy.vrhometech.fr
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: minioc.devver.app
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: minio-console-svc
+                port:
+                  number: 9001
+  tls:
+    - hosts:
+        - minioc.devver.app
+      secretName: minio-console-tls
