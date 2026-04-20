@@ -20,7 +20,9 @@ spec:
           args:
             - |
               export DB_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@logto-postgres-svc:5432/logto"
-              npm run cli db seed -- --swe && npm start
+              npm run cli db seed -- --swe
+              npm run cli db alteration deploy latest
+              npm start
           env:
             - name: TRUST_PROXY_HEADER
               value: "1"
