@@ -37,7 +37,7 @@ kubectl apply -f pvc-nfs-backup.yaml
 
 Ensuite dans l'interface Kasten : **Settings → Location Profiles → New Profile → File System** → indiquer le PVC `pvc-kasten-backup`.
 
-![alt text](image.png)
+
 ### `volumestorageclass-longhorn.yaml`
 Déclare la `VolumeSnapshotClass` Longhorn avec l'annotation `k10.kasten.io/is-snapshot-class: "true"` pour que Kasten puisse créer des snapshots de volumes.
 
