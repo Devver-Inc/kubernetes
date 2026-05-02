@@ -21,6 +21,11 @@ spec:
         server: https://kubernetes.default.svc
         namespace: "{{path[0]}}-{{path[1]}}"
 
+      ignoreDifferences:
+        - kind: Secret
+          jqPathExpressions:
+            - .metadata.name | endswith("-mongo-keyfile")
+
       sources:
         # Repo Helm chart
         - repoURL: https://github.com/Devver-Inc/kubernetes.git

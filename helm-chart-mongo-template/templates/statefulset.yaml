@@ -134,7 +134,7 @@ spec:
             defaultMode: 0755
         - name: keyfile-secret
           secret:
-            secretName: {{ include "mongo-template.mongoName" . }}-secret
+            secretName: {{ include "mongo-template.mongoName" . }}-keyfile
             items:
               - key: mongodb-keyfile
                 path: mongodb-keyfile
