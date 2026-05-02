@@ -1,0 +1,27 @@
+namespace:
+  create: false   # namespace déjà créé par le chart deployment
+
+organization:
+  name: "orgt1"
+  domain: "devver.app"
+
+project:
+  name: "projt1"
+
+auth:
+  rootUsername: "root"
+  rootPassword: "changeme"
+
+replicaCount: 1   # passer à 3 pour HA
+
+persistence:
+  size: "10Gi"
+  storageClass: "longhorn"
+
+resources:
+  requests:
+    memory: "512Mi"
+    cpu: "100m"
+  limits:
+    memory: "1Gi"
+    cpu: "500m"

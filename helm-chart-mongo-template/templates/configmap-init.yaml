@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "mongo-template.mongoName" . }}-init
+  namespace: {{ include "mongo-template.namespace" . }}
+  labels:
+    {{- include "mongo-template.labels" . | nindent 4 }}
+data:
+  init-replicaset.sh: |
+    #!/bin/bash
+    # Tourne en postStart sur le pod-0 uniquement
+    # L'entrypoint officiel a déjà créé le user root et démarré mongod
+
+    MONGO_NAME="{{ include "mongo-template.mongoName" . }}"
+    REPLICA_SET="{{ .Values.replicaSetName }}"
+    REPLICAS={{ .Values.replicaCount }}
+    PORT={{ .Values.port }}
+    NAMESPACE="{{ include "mongo-template.namespace" . }}"
+
+    # FQDN du pod-0 pour la connexion depuis le Job
+    POD0_HOST="${MONGO_NAME}-0.${MONGO_NAME}-headless.${NAMESPACE}.svc.cluster.local"
+    CONNECT_URI="mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@${POD0_HOST}:${PORT}/?authSource=admin&tls=true&tlsCAFile=/etc/mongo/tls/ca.crt"
+
+    echo "Attente que MongoDB soit prêt sur ${POD0_HOST}:${PORT}..."
+    until mongosh "${CONNECT_URI}" --eval "db.adminCommand('ping')" --quiet 2>/dev/null; do
+      sleep 3
+    done
+
+    echo "Vérification si le ReplicaSet est déjà initialisé..."
+    STATUS=$(mongosh "${CONNECT_URI}" --eval "rs.status().ok" --quiet 2>/dev/null || echo "0")
+
+    if [ "$STATUS" != "1" ]; then
+      echo "Initialisation du ReplicaSet ${REPLICA_SET}..."
+
+      MEMBERS=""
+      for i in $(seq 0 $((REPLICAS - 1))); do
+        HOST="${MONGO_NAME}-${i}.${MONGO_NAME}-headless.${NAMESPACE}.svc.cluster.local:${PORT}"
+        if [ $i -eq 0 ]; then
+          MEMBERS="{ _id: ${i}, host: \"${HOST}\" }"
+        else
+          MEMBERS="${MEMBERS}, { _id: ${i}, host: \"${HOST}\" }"
+        fi
+      done
+
+      mongosh "${CONNECT_URI}" --eval "rs.initiate({ _id: \"${REPLICA_SET}\", members: [${MEMBERS}] })"
+      echo "ReplicaSet initialisé."
+    else
+      echo "ReplicaSet déjà initialisé, rien à faire."
+    fi

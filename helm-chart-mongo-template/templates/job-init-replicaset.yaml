@@ -1,0 +1,47 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "mongo-template.mongoName" . }}-init-rs
+  namespace: {{ include "mongo-template.namespace" . }}
+  labels:
+    {{- include "mongo-template.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation
+    "helm.sh/hook-timeout": "300"
+spec:
+  backoffLimit: 10
+  activeDeadlineSeconds: 300
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: init-replicaset
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          command: ["/bin/bash", "/scripts/init-replicaset.sh"]
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "mongo-template.mongoName" . }}-secret
+                  key: MONGO_ROOT_USERNAME
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "mongo-template.mongoName" . }}-secret
+                  key: MONGO_ROOT_PASSWORD
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+            - name: tls
+              mountPath: /etc/mongo/tls
+              readOnly: true
+      volumes:
+        - name: scripts
+          configMap:
+            name: {{ include "mongo-template.mongoName" . }}-init
+            defaultMode: 0755
+        - name: tls
+          secret:
+            secretName: {{ include "mongo-template.mongoName" . }}-tls

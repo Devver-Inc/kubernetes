@@ -1,0 +1,44 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: devver-client-mongo
+  namespace: argocd
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/Devver-Inc/argocd-client-deployment.git
+        revision: main
+        files:
+          - path: "*/**/values-mongo.yaml"   # déclenche uniquement si ce fichier existe
+
+  template:
+    metadata:
+      name: "{{path[0]}}-{{path[1]}}-mongo"
+    spec:
+      project: default
+
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{path[0]}}-{{path[1]}}"
+
+      sources:
+        # Repo Helm chart
+        - repoURL: https://github.com/Devver-Inc/kubernetes.git
+          targetRevision: main
+          path: helm-chart-mongo-template
+          helm:
+            valueFiles:
+              - $values/{{path[0]}}/{{path[1]}}/values-mongo.yaml
+
+        # Repo values
+        - repoURL: https://github.com/Devver-Inc/argocd-client-deployment.git
+          targetRevision: main
+          ref: values
+
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - PrunePropagationPolicy=foreground   # supprime les PVC à la suppression

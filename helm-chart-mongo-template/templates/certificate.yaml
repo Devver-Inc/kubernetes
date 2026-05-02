@@ -1,0 +1,38 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "mongo-template.mongoName" . }}-tls
+  namespace: {{ include "mongo-template.namespace" . }}
+  labels:
+    {{- include "mongo-template.labels" . | nindent 4 }}
+spec:
+  secretName: {{ include "mongo-template.mongoName" . }}-tls
+  duration: 8760h    # 1 an
+  renewBefore: 720h  # renouvelé 30j avant expiration
+  isCA: false
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  usages:
+    - digital signature
+    - key encipherment
+    - server auth
+    - client auth
+  ipAddresses:
+    - 127.0.0.1
+  dnsNames:
+    # Service ClusterIP (pour les clients applicatifs)
+    - {{ include "mongo-template.mongoName" . }}
+    - {{ include "mongo-template.mongoName" . }}.{{ include "mongo-template.namespace" . }}
+    - {{ include "mongo-template.mongoName" . }}.{{ include "mongo-template.namespace" . }}.svc.cluster.local
+    # Service Headless (pour la communication inter-membres du ReplicaSet)
+    - {{ include "mongo-template.mongoName" . }}-headless
+    - {{ include "mongo-template.mongoName" . }}-headless.{{ include "mongo-template.namespace" . }}
+    - {{ include "mongo-template.mongoName" . }}-headless.{{ include "mongo-template.namespace" . }}.svc.cluster.local
+    # DNS individuel de chaque pod (StatefulSet)
+    {{- range $i := until (int .Values.replicaCount) }}
+    - {{ include "mongo-template.mongoName" $ }}-{{ $i }}.{{ include "mongo-template.mongoName" $ }}-headless.{{ include "mongo-template.namespace" $ }}.svc.cluster.local
+    {{- end }}
+  issuerRef:
+    name: internal-ca
+    kind: ClusterIssuer

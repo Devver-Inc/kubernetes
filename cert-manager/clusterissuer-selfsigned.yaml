@@ -1,0 +1,38 @@
+---
+# ClusterIssuer bootstrap self-signed (sert uniquement à signer le CA racine interne)
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: selfsigned-bootstrap
+spec:
+  selfSigned: {}
+
+---
+# CA racine interne pour tout le trafic intra-cluster
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: internal-ca
+  namespace: cert-manager
+spec:
+  isCA: true
+  commonName: devver-internal-ca
+  secretName: internal-ca-secret
+  duration: 87600h   # 10 ans
+  renewBefore: 720h
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: selfsigned-bootstrap
+    kind: ClusterIssuer
+
+---
+# ClusterIssuer qui utilise le CA racine pour signer les certs internes
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: internal-ca
+spec:
+  ca:
+    secretName: internal-ca-secret

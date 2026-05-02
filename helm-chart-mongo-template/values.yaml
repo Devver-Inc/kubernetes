@@ -1,0 +1,53 @@
+# Configuration de l'organisation et du projet
+# namespace.create: true si ce chart est déployé seul (crée le namespace)
+# namespace.create: false si le namespace est déjà créé par le chart app
+namespace:
+  create: false
+
+organization:
+  name: "orgt1"       # Nom de l'organisation
+  domain: "devver.app"
+
+project:
+  name: "projt1"      # Nom du projet
+
+# Image MongoDB
+image:
+  repository: "mongo"
+  tag: "7.0"
+  pullPolicy: IfNotPresent
+
+# Nombre de replicas MongoDB (ReplicaSet)
+# 1 = standalone, 3 = HA recommandé
+replicaCount: 1
+
+# Nom du ReplicaSet interne MongoDB
+replicaSetName: "rs0"
+
+# Credentials MongoDB (en clair — Vault à venir)
+auth:
+  rootUsername: "root"
+  rootPassword: "changeme"
+  # La connection string peut être reconstruite :
+  # mongodb://rootUsername:rootPassword@<fullname>:27017
+
+# Persistent storage
+persistence:
+  size: "10Gi"
+  storageClass: "longhorn"
+
+# Ressources
+resources:
+  requests:
+    memory: "512Mi"
+    cpu: "100m"
+  limits:
+    memory: "1Gi"
+    cpu: "500m"
+
+# Port MongoDB
+port: 27017
+
+# Labels et annotations additionnels
+labels: {}
+annotations: {}

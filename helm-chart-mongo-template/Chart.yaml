@@ -1,0 +1,6 @@
+apiVersion: v2
+name: mongo-template
+description: Chart pour déployer MongoDB en StatefulSet avec ReplicaSet
+type: application
+version: 0.1.0
+appVersion: "7.0"

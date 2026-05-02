@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "mongo-template.mongoName" . }}
+  namespace: {{ include "mongo-template.namespace" . }}
+  labels:
+    {{- include "mongo-template.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: mongodb
+      port: {{ .Values.port }}
+      targetPort: mongodb
+  selector:
+    {{- include "mongo-template.selectorLabels" . | nindent 4 }}
