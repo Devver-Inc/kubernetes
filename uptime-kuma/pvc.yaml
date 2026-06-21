@@ -9,9 +9,9 @@ metadata:
   name: uptime-kuma-pvc
   namespace: devver-uptime-kuma
 spec:
-  storageClassName: longhorn
+  storageClassName: nfs-devver-prod
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   resources:
     requests:
       storage: 15Gi

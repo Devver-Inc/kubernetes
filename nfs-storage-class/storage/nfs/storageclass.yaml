@@ -1,0 +1,19 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: nfs-devver-prod
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+provisioner: nfs.csi.k8s.io
+parameters:
+  server: 192.168.10.5   # <- IP de ton NAS Ugreen
+  share: /volume1/NFS_K8S_DEVVER_PROD   # <- chemin du partage NFS
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+allowVolumeExpansion: false
+mountOptions:
+  - vers=3
+  - nolock
+  - hard
+  - timeo=600
+  - retrans=3

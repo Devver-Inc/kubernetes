@@ -1,0 +1,17 @@
+apiVersion: external-secrets.io/v1beta1
+kind: ClusterSecretStore
+metadata:
+  name: vault-myapp-test
+spec:
+  provider:
+    vault:
+      server: "https://vault.devver.app"
+      path: "devver_K8s"
+      version: "v2"
+      auth:
+        kubernetes:
+          mountPath: "devver_k8s_prod"
+          role: "myapp-test"
+          serviceAccountRef:
+            name: "myapp-sa"
+            namespace: "myapp-test"

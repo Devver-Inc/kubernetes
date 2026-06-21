@@ -1,0 +1,8 @@
+vault policy write myapp-test-policy - <<EOF
+path "devver_K8s/data/test/myapp/*" {
+  capabilities = ["read", "list"]
+}
+path "devver_K8s/metadata/test/myapp/*" {
+  capabilities = ["read", "list"]
+}
+EOF

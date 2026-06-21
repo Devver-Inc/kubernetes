@@ -1,0 +1,5 @@
+vault write auth/devver_k8s_prod/role/myapp-test \
+  bound_service_account_names=myapp-sa \
+  bound_service_account_namespaces=myapp-test \
+  token_policies=myapp-test-policy \
+  token_ttl=30m
