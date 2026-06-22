@@ -4,7 +4,7 @@ metadata:
   name: logto-postgres-pvc
   namespace: devver-logto
 spec:
-  storageClassName: longhorn
+  storageClassName: nfs-devver-prod
   accessModes:
     - ReadWriteOnce
   resources:

@@ -59,4 +59,4 @@ spec:
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: minio-pvc
+            claimName: minio-pvc-nfs

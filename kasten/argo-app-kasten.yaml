@@ -1,0 +1,49 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kasten-k10
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://charts.kasten.io/
+    chart: k10
+    targetRevision: 8.5.12
+    helm:
+      values: |
+        global:
+          # Forcer tous les volumes internes Kasten sur NFS
+          persistence:
+            storageClass: nfs-devver-prod
+            accessMode: ReadWriteMany
+
+        # StorageClass pour les volumes temporaires kanister (copies de volumes)
+        kanister:
+          backupPVCStorageClass: nfs-devver-prod
+
+        ingress:
+          create: true
+          ingressClassName: traefik
+          host: kasten.devver.app
+          urlPath: "/k10/"
+          annotations:
+            external-dns.alpha.kubernetes.io/target: reverse-proxy.vrhometech.fr
+            traefik.ingress.kubernetes.io/router.entrypoints: websecure
+            cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+          tls:
+            enabled: true
+            secretName: kasten-tls
+
+        auth:
+          tokenAuth:
+            enabled: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kasten-io
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
