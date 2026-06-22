@@ -26,6 +26,9 @@ spec:
           jsonPointers:
             - /data
             - /metadata/annotations
+        - kind: PersistentVolumeClaim
+          jsonPointers:
+            - /spec/volumeName
       sources:
         # Repo Helm chart
         - repoURL: https://github.com/Devver-Inc/kubernetes.git
@@ -46,3 +49,4 @@ spec:
           selfHeal: true
         syncOptions:
           - CreateNamespace=true
+          - RespectIgnoreDifferences=true

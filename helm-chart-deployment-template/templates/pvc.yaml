@@ -9,7 +9,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: {{ .Values.persistence.app.storageClass | default "longhorn" }}
+  storageClassName: {{ .Values.persistence.app.storageClass | default "nfs-devver-prod" }}
   resources:
     requests:
       storage: {{ .Values.persistence.app.size }}
@@ -24,7 +24,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: {{ .Values.persistence.root.storageClass | default "longhorn" }}
+  storageClassName: {{ .Values.persistence.root.storageClass | default "nfs-devver-prod" }}
   resources:
     requests:
       storage: {{ .Values.persistence.root.size }}
