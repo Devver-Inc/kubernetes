@@ -38,11 +38,11 @@ persistence:
   app:
     size: "10Gi"
     mountPath: "/app"
-    storageClass: longhorn
+    storageClass: nfs-devver-prod
   root:
     size: "5Gi"
     mountPath: "/root"
-    storageClass: longhorn
+    storageClass: nfs-devver-prod
 
 # Configuration du nombre de replicas
 replicaCount: 1
