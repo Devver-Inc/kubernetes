@@ -16,7 +16,7 @@ replicaCount: 1   # passer à 3 pour HA
 
 persistence:
   size: "10Gi"
-  storageClass: "longhorn"
+  storageClass: "nfs-devver-prod"
 
 resources:
   requests:
