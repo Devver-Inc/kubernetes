@@ -34,7 +34,7 @@ auth:
 # Persistent storage
 persistence:
   size: "10Gi"
-  storageClass: "longhorn"
+  storageClass: "nfs-devver-prod"
 
 # Ressources
 resources:
