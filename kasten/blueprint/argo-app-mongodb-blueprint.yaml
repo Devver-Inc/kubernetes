@@ -7,7 +7,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/kanisterio/blueprints
-    targetRevision: master
+    targetRevision: main
     path: mongodb
     directory:
       include: "blueprint.yaml"
