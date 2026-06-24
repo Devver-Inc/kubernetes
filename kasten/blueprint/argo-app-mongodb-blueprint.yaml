@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kanister-mongodb-blueprint
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kanisterio/kanister
+    targetRevision: master
+    path: examples/mongodb
+    directory:
+      include: "blueprint.yaml"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kasten-io
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
