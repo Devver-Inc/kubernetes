@@ -6,9 +6,9 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/kanisterio/kanister
+    repoURL: https://github.com/kanisterio/blueprints
     targetRevision: master
-    path: examples/mongodb
+    path: mongodb
     directory:
       include: "blueprint.yaml"
   destination:
