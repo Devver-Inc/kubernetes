@@ -1,7 +1,7 @@
 apiVersion: cr.kanister.io/v1alpha1
 kind: Blueprint
 metadata:
-  name: mongo-sidecar
+  name: "mongodb-blueprint"
   namespace: kasten-io
 actions:
   backup:
