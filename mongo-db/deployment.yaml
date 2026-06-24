@@ -4,7 +4,7 @@ metadata:
   name: mongodb
   namespace: devver-mongodb
   annotations:
-    kanister.kasten.io/blueprint: "mongodb-blueprint"
+    kanister.kasten.io/blueprint: "mongodb-dep-blueprint"
     kanister.kasten.io/profile: "kanister-profile"
 spec:
   replicas: 1

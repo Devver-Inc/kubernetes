@@ -1,0 +1,40 @@
+apiVersion: cr.kanister.io/v1alpha1
+kind: Blueprint
+metadata:
+  name: mongodb-dep-blueprint
+  namespace: kasten-io
+actions:
+  backup:
+    kind: Deployment
+    phases:
+    - func: KubeExec
+      name: takeConsistentBackup
+      args:
+        namespace: '{{ .Deployment.Namespace }}'
+        pod: '{{ index .Deployment.Pods 0 }}'
+        container: mongodb
+        command:
+        - bash
+        - -c
+        - |
+          mongodump --out=/tmp/mongo-backup
+          tar -czf /tmp/mongo-backup.tar.gz -C /tmp mongo-backup
+          rm -rf /tmp/mongo-backup
+  restore:
+    kind: Deployment
+    inputArtifactNames:
+    - cloudObject
+    phases:
+    - func: KubeExec
+      name: restoreFromBackup
+      args:
+        namespace: '{{ .Deployment.Namespace }}'
+        pod: '{{ index .Deployment.Pods 0 }}'
+        container: mongodb
+        command:
+        - bash
+        - -c
+        - |
+          tar -xzf /tmp/mongo-backup.tar.gz -C /tmp
+          mongorestore /tmp/mongo-backup
+          rm -rf /tmp/mongo-backup /tmp/mongo-backup.tar.gz
