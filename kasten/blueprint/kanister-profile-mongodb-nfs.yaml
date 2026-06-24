@@ -1,0 +1,12 @@
+apiVersion: config.kio.kasten.io/v1alpha1
+kind: Profile
+metadata:
+  name: kanister-profile
+  namespace: kasten-io
+spec:
+  type: Location
+  locationSpec:
+    type: FileStore
+    fileStore:
+      claimName: pvc-kasten-backup
+      path: kanister
