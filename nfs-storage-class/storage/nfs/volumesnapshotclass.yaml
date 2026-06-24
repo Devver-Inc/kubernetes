@@ -6,4 +6,6 @@ metadata:
     k10.kasten.io/is-snapshot-class: "true"
 driver: nfs.csi.k8s.io
 deletionPolicy: Retain
-parameters: {}
+parameters:
+  server: "192.168.10.5"
+  share: "/volume1/NFS_K8S_DEVVER_PROD"
