@@ -1,7 +1,7 @@
 apiVersion: config.kio.kasten.io/v1alpha1
 kind: Profile
 metadata:
-  name: kanister-profile
+  name: kanister-profile-nfs-devver-backup
   namespace: kasten-io
 spec:
   type: Location

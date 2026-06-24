@@ -5,7 +5,7 @@ metadata:
   namespace: devver-mongodb
   annotations:
     kanister.kasten.io/blueprint: "mongodb-dep-blueprint"
-    kanister.kasten.io/profile: "kanister-profile"
+    kanister.kasten.io/profile: "kanister-profile-nfs-devver-backup"
 spec:
   replicas: 1
   selector:
