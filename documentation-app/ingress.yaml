@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: frontend-app-ingress
+  namespace: devver-documentation-app
+  annotations:
+    external-dns.alpha.kubernetes.io/target: reverse-proxy.vrhometech.fr
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: docs.devver.app
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: documentation-app-svc
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - docs.devver.app
+      secretName: documentation-app-tls

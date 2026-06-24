@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: documentation-app
+  namespace: devver-documentation-app
+  labels:
+    app: documentation-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: documentation-app
+  template:
+    metadata:
+      labels:
+        app: documentation-app
+    spec:
+      imagePullSecrets:
+        - name: ghcr-devver
+      containers:
+        - name: documentation-app
+          image: ghcr.io/devver-inc/documentation-app:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5173
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "200m"
