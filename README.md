@@ -18,7 +18,7 @@ Traefik (Ingress Controller + TLS)
    ├── crowdsec         → Détection d'intrusion sur les logs Traefik
    │
    ├── ArgoCD           → GitOps / déploiement continu
-   ├── Kasten K10       → Sauvegardes Kubernetes (Longhorn + NFS)
+   ├── Kasten K10       → Sauvegardes Kubernetes (NFS sur NAS externe)
    │
    ├── frontend-app     → Application frontend Devver
    ├── landing-page     → Page d'accueil Devver
@@ -38,10 +38,13 @@ Domaine principal : `devver.app` — HTTPS automatique sur tous les services.
 | [external-dns/](external-dns/) | Synchronisation DNS automatique vers Cloudflare |
 | [frontend-app/](frontend-app/) | Déploiement de l'application frontend |
 | [helm-chart-deployment-template/](helm-chart-deployment-template/) | Chart Helm réutilisable pour déployer une app |
+| [helm-chart-mongo-template/](helm-chart-mongo-template/) | Chart Helm StatefulSet MongoDB avec ReplicaSet et TLS |
+| [vault/](vault/) | Déploiement HashiCorp Vault (gestion des secrets) |
 | [kasten/](kasten/) | Sauvegardes et restauration Kubernetes |
 | [landing-page/](landing-page/) | Déploiement de la landing page |
 | [logto/](logto/) | Plateforme d'authentification avec PostgreSQL |
-| [longhorn/](longhorn/) | Stockage distribué persistant |
+| [nfs-storage-class/](nfs-storage-class/) | NFS CSI Driver — stockage persistant via NAS externe |
+| [longhorn/](longhorn/) | Stockage distribué persistant (remplacé par NFS en T3) |
 | [traefik/](traefik/) | Reverse proxy et répartition de charge |
 | [uptime-kuma/](uptime-kuma/) | Monitoring de disponibilité des services |
 
@@ -55,11 +58,12 @@ Domaine principal : `devver.app` — HTTPS automatique sur tous les services.
 
 ## Ordre d'installation recommandé
 
-1. **Longhorn** — stockage persistant (requis par la plupart des apps)
+1. **NFS CSI Driver** — stockage persistant via NAS externe (requis par la plupart des apps)
 2. **MetalLB + Traefik** — réseau et ingress
 3. **cert-manager** — certificats TLS
 4. **external-dns** — gestion DNS
-5. **ArgoCD** — déploiement continu
-6. **Kasten** — sauvegardes
-7. **Crowdsec** — sécurité
-8. **Applications** — logto, frontend-app, landing-page, uptime-kuma
+5. **ArgoCD** — déploiement continu (gère ensuite tous les composants suivants)
+6. **Vault** — gestion des secrets
+7. **Kasten** — sauvegardes
+8. **Crowdsec** — sécurité
+9. **Applications** — logto, frontend-app, landing-page, uptime-kuma

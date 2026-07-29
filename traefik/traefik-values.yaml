@@ -3,6 +3,7 @@ additionalArguments:
   - "--providers.kubernetesingress.ingressclass=traefik"
   - "--providers.kubernetescrd=true"
   - "--entrypoints.websecure.address=:8443"
+  - "--entrypoints.websecure.http.middlewares=traefik-security-headers@kubernetescrd"
 
 ports:
   websecure:
