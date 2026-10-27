@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: git-gateway
+  namespace: devver-git-gateway
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: git-gateway
+  template:
+    metadata:
+      labels:
+        app: git-gateway
+    spec:
+      serviceAccountName: git-gateway
+      imagePullSecrets:
+      - name: ghcr-secret
+      containers:
+      - name: git-gateway
+        image: ghcr.io/devver-inc/git-gateway:v0.1.0
+        ports:
+        - name: ssh
+          containerPort: 2222
+        env:
+        - name: DEVVER_BACKEND_URL
+          value: "http://backend-service.devver-backend-service.svc.cluster.local:3000/api/v1"
+        - name: DEVVER_UPSTREAM_TEMPLATE
+          value: "deploy-agent.p-{projectId}.svc.cluster.local:22"
+        - name: DEVVER_UPSTREAM_KEY_FILE
+          value: /etc/git-gateway/upstreamKey
+        - name: DEVVER_GATEWAY_SECRET
+          valueFrom:
+            secretKeyRef: { name: git-gateway, key: gatewaySecret }
+        - name: SSHPIPERD_SERVER_KEY_DATA
+          valueFrom:
+            secretKeyRef: { name: git-gateway, key: hostKey }
+        volumeMounts:
+        - name: keys
+          mountPath: /etc/git-gateway
+          readOnly: true
+        readinessProbe:
+          tcpSocket:
+            port: ssh
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "20m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+      volumes:
+      - name: keys
+        secret:
+          secretName: git-gateway
+          items:
+          - key: upstreamKey
+            path: upstreamKey
+          defaultMode: 0400
+---
+# Port 22 public : à exposer comme git.devver.app (redirection TCP sur le reverse proxy).
+apiVersion: v1
+kind: Service
+metadata:
+  name: git-gateway
+  namespace: devver-git-gateway
+spec:
+  type: LoadBalancer
+  selector:
+    app: git-gateway
+  ports:
+  - name: ssh
+    port: 22
+    targetPort: ssh

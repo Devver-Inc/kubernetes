@@ -1,0 +1,21 @@
+{{- with .Values.container.env }}
+{{- if and .DEVVER_PROJECT_ID .DEVVER_PREVIEW_DOMAIN }}
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ include "app-template.fullname" $ }}-preview
+  namespace: {{ include "app-template.namespace" $ }}
+  labels:
+    {{- include "app-template.labels" $ | nindent 4 }}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: HostRegexp(`^[a-z0-9-]+--{{ lower .DEVVER_PROJECT_ID }}\.{{ lower .DEVVER_PREVIEW_DOMAIN | replace "." "\\." }}$`)
+      services:
+        - name: {{ include "app-template.fullname" $ }}
+          port: http
+  tls: {}
+{{- end }}
+{{- end }}

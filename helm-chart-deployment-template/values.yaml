@@ -1,38 +1,41 @@
-# Configuration de l'organisation et du projet
 organization:
-  name: "orgt1"  # Nom de l'organisation
-  domain: "devver.app"  # Domaine principal
+  id: ""
+  name: ""
+  domain: "devver.app"
 
 project:
-  name: "projt1"  # Nom du projet
-  #displayName: "projtest"  # Nom d'affichage
+  id: ""
+  name: ""
+
+agentImage: "ghcr.io/devver-inc/deploy-agent:v0.2.0"
 
 imagePullSecrets:
   - name: ghcr-secret
 
-# Configuration du conteneur (OS Linux complet ou application)
 container:
-  image: "ghcr.io/devver-inc/deploy-agent:latest"  # Image du conteneur (OS Linux ou application)
-  port: 80  # Port exposé par le conteneur
-  type: "app"
-  command: []
-  args: []
-
   env:
-    DEVVER_SECRET: ""
-    NODE_ENV: "production"
-    DEVVER_WIDGET_URL: "https://cdn.jsdelivr.net/gh/Devver-Inc/overlay@main/public/devver-overlay.iife.js"
-  
-# Configuration des ressources
+    DEVVER_PROJECT_ID: ""
+    DEVVER_PREVIEW_DOMAIN: "preview.devver.app"
+
+vault:
+  server: "https://vault.devver.app"
+  kvMount: "devver_K8s"
+  authMount: "devver_k8s_prod"
+  role: "deploy-agent-eso"
+
+network:
+  traefikNamespace: "traefik"
+  backendNamespace: "devver-backend-service"
+  gitGatewayNamespace: "devver-git-gateway"
+
 resources:
   requests:
-    memory: "128Mi"
-    cpu: "100m"
+    memory: "512Mi"
+    cpu: "250m"
   limits:
-    memory: "128Mi"
-    cpu: "100m"
+    memory: "2Gi"
+    cpu: "2000m"
 
-# Configuration de la persistance
 persistence:
   enabled: true
   app:
@@ -44,17 +47,5 @@ persistence:
     mountPath: "/root"
     storageClass: nfs-devver-prod
 
-# Configuration du nombre de replicas
-replicaCount: 1
-
-# Configuration des ports
-ports:
-  http: 80
-  https: 443
-
-# Labels et sélecteurs additionnels
 labels: {}
 annotations: {}
-
-
-  
