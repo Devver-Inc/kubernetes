@@ -1,0 +1,27 @@
+{{- /*
+Previews : <deployment>--<projectId>.<DEVVER_PREVIEW_DOMAIN>. Un seul wildcard DNS/TLS
+(*.preview.devver.app, voir preview/) sert tous les projets ; le suffixe --<projectId>
+envoie chaque host vers le deploy-agent du bon projet.
+*/ -}}
+{{- with .Values.container.env }}
+{{- if and .DEVVER_PROJECT_ID .DEVVER_PREVIEW_DOMAIN }}
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ include "app-template.fullname" $ }}-preview
+  namespace: {{ include "app-template.namespace" $ }}
+  labels:
+    {{- include "app-template.labels" $ | nindent 4 }}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: HostRegexp(`^[a-z0-9-]+--{{ lower .DEVVER_PROJECT_ID }}\.{{ lower .DEVVER_PREVIEW_DOMAIN | replace "." "\\." }}$`)
+      services:
+        - name: {{ include "app-template.fullname" $ }}
+          port: {{ $.Values.ports.http }}
+  # Certificat wildcard du TLSStore "default" (preview/wildcard.yaml).
+  tls: {}
+{{- end }}
+{{- end }}
