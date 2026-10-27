@@ -4,3 +4,6 @@ metadata:
   name: {{ include "app-template.namespace" . }}
   labels:
     {{- include "app-template.labels" . | nindent 4 }}
+    {{- if eq .Values.imagePullSecret.mode "eso" }}
+    devver.app/needs-ghcr: "true"
+    {{- end }}

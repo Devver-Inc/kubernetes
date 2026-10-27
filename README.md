@@ -39,7 +39,7 @@ Domaine principal : `devver.app` — HTTPS automatique sur tous les services.
 | [frontend-app/](frontend-app/) | Déploiement de l'application frontend |
 | [helm-chart-deployment-template/](helm-chart-deployment-template/) | Chart Helm réutilisable pour déployer une app |
 | [helm-chart-mongo-template/](helm-chart-mongo-template/) | Chart Helm StatefulSet MongoDB avec ReplicaSet et TLS |
-| [vault/](vault/) | Déploiement HashiCorp Vault (gestion des secrets) |
+| [platform-secrets/](platform-secrets/) | Secrets de la stack synchronisés depuis Vault par External Secrets Operator ([procédure](docs/vault-nouveau-cluster.md)) |
 | [kasten/](kasten/) | Sauvegardes et restauration Kubernetes |
 | [landing-page/](landing-page/) | Déploiement de la landing page |
 | [logto/](logto/) | Plateforme d'authentification avec PostgreSQL |
@@ -63,7 +63,7 @@ Domaine principal : `devver.app` — HTTPS automatique sur tous les services.
 3. **cert-manager** — certificats TLS
 4. **external-dns** — gestion DNS
 5. **ArgoCD** — déploiement continu (gère ensuite tous les composants suivants)
-6. **Vault** — gestion des secrets
+6. **External Secrets Operator + platform-secrets** — secrets depuis Vault (VM on-prem `vault.devver.app`), voir [docs/vault-nouveau-cluster.md](docs/vault-nouveau-cluster.md)
 7. **Kasten** — sauvegardes
 8. **Crowdsec** — sécurité
 9. **Applications** — logto, frontend-app, landing-page, uptime-kuma

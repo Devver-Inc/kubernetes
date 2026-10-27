@@ -1,0 +1,20 @@
+{{- range .Values.namespaces }}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .name }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  labels:
+    {{- include "platform-secrets.labels" $ | nindent 4 }}
+    {{- with $.Values.namespaceLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- if .platform }}
+    devver.app/secrets-tier: platform
+    {{- end }}
+    {{- if .ghcr }}
+    devver.app/needs-ghcr: "true"
+    {{- end }}
+{{- end }}

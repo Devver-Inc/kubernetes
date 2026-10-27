@@ -10,6 +10,34 @@ project:
 imagePullSecrets:
   - name: ghcr-secret
 
+# Origine du Secret ghcr-secret du namespace :
+#   reflector : stub rempli par Reflector depuis kube-system/ghcr-secret (cluster actuel)
+#   eso       : namespace labellisé devver.app/needs-ghcr=true, le Secret est créé par
+#               le ClusterExternalSecret ghcr-secret du chart platform-secrets (Vault)
+imagePullSecret:
+  mode: reflector
+
+# Cluster cible — chemin Vault kubernetes-cluster/<org>/<env>/clients/<namespace>/
+# Injecté par l'ApplicationSet (paramètres Helm), pas par le backend.
+cluster:
+  org: ""
+  env: ""
+
+# Secrets de l'app depuis Vault (External Secrets Operator).
+# false : comportement historique (uniquement container.env, en clair).
+# true  : le backend écrit kubernetes-cluster/<org>/<env>/clients/<namespace>/app ;
+#         toutes ses clés sont injectées en variables d'environnement (envFrom).
+#         container.env reste pour la config NON sensible.
+secrets:
+  enabled: false
+  refreshInterval: 15m   # relecture de Vault par ESO (immédiat : annotation force-sync)
+  vault:
+    server: "https://vault.devver.app"
+    mount: "kubernetes-cluster"
+    # vide = k8s-<cluster.org>-<cluster.env>
+    authMount: ""
+    role: "eso-tenant"
+
 # Configuration du conteneur (OS Linux complet ou application)
 container:
   image: "ghcr.io/devver-inc/deploy-agent:latest"  # Image du conteneur (OS Linux ou application)
@@ -57,4 +85,4 @@ labels: {}
 annotations: {}
 
 
-  
+  

@@ -67,7 +67,14 @@ En pratique avec ArgoCD, le namespace est déjà créé par le chart deployment 
 
 ---
 
-## templates/secret.yaml
+## templates/secret.yaml / templates/vault-secrets.yaml
+
+Avec `secrets.enabled=true` (nouveaux clusters), `secret.yaml` n'est pas rendu :
+`vault-secrets.yaml` crée un ExternalSecret qui produit **le même Secret, avec
+les mêmes clés**, à partir de `kubernetes-cluster/<org>/<env>/clients/<namespace>/mongo`
+(`username`, `password`, écrits par le backend). Il utilise son propre SA
+`vault-reader-mongo` et SecretStore `vault-mongo` (Application Argo distincte du
+chart app). Le mode historique ci-dessous reste le défaut.
 
 Secret principal `nomorga-nomprojet-mongo-secret` contenant :
 - `MONGO_ROOT_USERNAME` / `MONGO_ROOT_PASSWORD` : credentials root lus depuis le values

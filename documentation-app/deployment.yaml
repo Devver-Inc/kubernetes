@@ -16,7 +16,7 @@ spec:
         app: documentation-app
     spec:
       imagePullSecrets:
-        - name: ghcr-devver
+        - name: ghcr-secret
       containers:
         - name: documentation-app
           image: ghcr.io/devver-inc/documentation-app:latest

@@ -13,7 +13,7 @@ spec:
   source:
     repoURL: https://charts.external-secrets.io
     chart: external-secrets
-    targetRevision: 0.10.5  # à adapter selon la version souhaitée
+    targetRevision: 2.11.0  # API external-secrets.io/v1 (v1beta1 n'est plus servie)
     helm:
       releaseName: external-secrets
       values: |

@@ -4,3 +4,4 @@ metadata:
   name: devver-frontend-app
   labels:
     kasten-backup-prod-ns: "true"
+    devver.app/needs-ghcr: "true"

@@ -4,3 +4,5 @@ metadata:
   name: devver-backend-service
   labels:
     kasten-backup-prod-ns: "true"
+    devver.app/secrets-tier: platform
+    devver.app/needs-ghcr: "true"

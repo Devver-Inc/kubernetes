@@ -4,3 +4,4 @@ metadata:
   name: cert-manager
   labels:
     kasten-backup-prod-ns: "true"
+    devver.app/secrets-tier: platform

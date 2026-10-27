@@ -4,3 +4,4 @@ metadata:
   name: devver-logto
   labels:
     kasten-backup-prod-ns: "true"
+    devver.app/secrets-tier: platform

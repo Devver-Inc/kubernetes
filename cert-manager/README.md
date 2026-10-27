@@ -6,7 +6,6 @@ Configuration du `ClusterIssuer` Let's Encrypt pour l'émission automatique de c
 
 | Fichier | Description |
 |---|---|
-| `cloudflare-secret.yaml` | Secret contenant le token API Cloudflare |
 | `clusterissuer.yaml` | ClusterIssuer Let's Encrypt (production) |
 
 ## Fonctionnement
@@ -21,8 +20,9 @@ helm repo add jetstack https://charts.jetstack.io
 helm install cert-manager jetstack/cert-manager -n cert-manager --create-namespace \
   --set installCRDs=true
 
-# Créer le secret Cloudflare (renseigner le token avant d'appliquer)
-kubectl apply -f cloudflare-secret.yaml
+# Le Secret cloudflare-dns (token API Cloudflare) n'est plus dans ce dossier :
+# il est synchronisé depuis Vault (kubernetes-cluster/<org>/<env>/cloudflare)
+# par le chart platform-secrets — voir docs/vault-nouveau-cluster.md
 
 # Créer le ClusterIssuer
 kubectl apply -f clusterissuer.yaml

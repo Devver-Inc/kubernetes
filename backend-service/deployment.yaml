@@ -13,6 +13,8 @@ spec:
       labels:
         app: backend-service
     spec:
+      # SA présenté à Vault (auth Kubernetes, rôle backend) — voir serviceaccount.yaml
+      serviceAccountName: backend-service
       imagePullSecrets:
       - name: ghcr-secret
       containers:
@@ -23,6 +25,8 @@ spec:
         - containerPort: 3000
           name: http
         envFrom:
+        - configMapRef:
+            name: backend-config
         - secretRef:
             name: backend-secret
         resources:

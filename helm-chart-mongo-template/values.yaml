@@ -24,7 +24,27 @@ replicaCount: 1
 # Nom du ReplicaSet interne MongoDB
 replicaSetName: "rs0"
 
-# Credentials MongoDB (en clair — Vault à venir)
+# Cluster cible — chemin Vault kubernetes-cluster/<org>/<env>/clients/<namespace>/mongo
+# Injecté par l'ApplicationSet (paramètres Helm), pas par le backend.
+cluster:
+  org: ""
+  env: ""
+
+# Credentials depuis Vault (External Secrets Operator).
+# false : comportement historique (auth.* ci-dessous, en clair dans les values).
+# true  : le backend écrit kubernetes-cluster/<org>/<env>/clients/<namespace>/mongo
+#         (clés username, password — alphanumériques) ; auth.* est ignoré.
+secrets:
+  enabled: false
+  refreshInterval: 15m   # relecture de Vault par ESO (immédiat : annotation force-sync)
+  vault:
+    server: "https://vault.devver.app"
+    mount: "kubernetes-cluster"
+    # vide = k8s-<cluster.org>-<cluster.env>
+    authMount: ""
+    role: "eso-tenant"
+
+# Credentials MongoDB en clair — uniquement si secrets.enabled=false
 auth:
   rootUsername: "root"
   rootPassword: "changeme"

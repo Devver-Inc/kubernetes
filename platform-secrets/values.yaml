@@ -1,0 +1,51 @@
+# Identifiant du cluster — chemin Vault kubernetes-cluster/<org>/<env>/ et
+# auth Kubernetes k8s-<org>-<env> (créés par cluster-k8s-deployment :
+# terraform/vault/k8s-secrets.tf + ansible/playbooks/05-vault-k8s.yml).
+cluster:
+  org: ""   # requis — ex: acme
+  env: ""   # requis — prod | staging | dev
+
+vault:
+  server: "https://vault.devver.app"
+  # Mount KV v2 des secrets applicatifs
+  mount: "kubernetes-cluster"
+  # Mount de l'auth Kubernetes ; vide = k8s-<org>-<env>
+  authMount: ""
+  # caProvider ESO, seulement si le certificat présenté par vault.devver.app
+  # n'est pas reconnu depuis le cluster (ex: CA interne "Vault Internal CA").
+  # Format : bloc caProvider d'ESO (type/name/key/namespace).
+  caProvider: {}
+
+# Namespace d'External Secrets Operator (ServiceAccounts eso-platform / eso-ghcr)
+esoNamespace: external-secrets-system
+
+# Intervalle de relecture de Vault par ESO (une valeur saisie dans la console
+# est prise en compte en 15 min max ; immédiat avec l'annotation force-sync).
+refreshInterval: 15m
+
+# Namespaces de la stack créés ici (avant les apps) avec les labels qui
+# autorisent l'accès aux ClusterSecretStores :
+#   devver.app/secrets-tier: platform  → vault-platform (secrets de la stack)
+#   devver.app/needs-ghcr: "true"      → ghcr-secret distribué par vault-ghcr
+namespaces:
+  - name: devver-backend-service
+    platform: true
+    ghcr: true
+  - name: devver-minio
+    platform: true
+  - name: devver-logto
+    platform: true
+  - name: cert-manager
+    platform: true
+  - name: external-dns
+    platform: true
+  - name: devver-frontend-app
+    ghcr: true
+  - name: devver-landing-page
+    ghcr: true
+  - name: devver-documentation-app
+    ghcr: true
+
+# Labels ajoutés à tous les namespaces ci-dessus
+namespaceLabels:
+  kasten-backup-prod-ns: "true"

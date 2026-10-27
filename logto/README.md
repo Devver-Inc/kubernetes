@@ -8,7 +8,6 @@ Déploiement de Logto, plateforme d'identité et d'authentification OAuth2/OIDC,
 |---|---|
 | `namespace.yaml` | Namespace `devver-logto` |
 | `configmap.yaml` | Configuration Logto (ENDPOINT, ADMIN_ENDPOINT) |
-| `secret-postgres.yaml` | Credentials PostgreSQL (à remplir avant déploiement) |
 | `deployment-postgres.yaml` | Déploiement PostgreSQL 17 |
 | `svc-postgres.yaml` | Service PostgreSQL sur le port 5432 |
 | `pvc-postgres.yaml` | Volume persistant pour les données PostgreSQL (Longhorn) |
@@ -30,8 +29,9 @@ Logto (port 3001 — UI admin, port 3002 — API auth)
 # 1. Namespace
 kubectl apply -f namespace.yaml
 
-# 2. Renseigner les credentials dans secret-postgres.yaml puis appliquer
-kubectl apply -f secret-postgres.yaml
+# 2. Le Secret logto-postgres-secret est synchronisé depuis Vault
+#    (kubernetes-cluster/<org>/<env>/logto-postgres, mot de passe généré) par le
+#    chart platform-secrets — voir docs/vault-nouveau-cluster.md
 kubectl apply -f configmap.yaml
 
 # 3. Base de données

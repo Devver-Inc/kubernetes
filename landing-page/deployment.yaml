@@ -39,5 +39,5 @@ spec:
             failureThreshold: 3
       
       imagePullSecrets:
-        - name: ghcr-devver
+        - name: ghcr-secret
       

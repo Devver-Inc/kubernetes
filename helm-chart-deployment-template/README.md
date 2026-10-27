@@ -159,5 +159,27 @@ helm-chart-deployment-template/
     ├── service.yaml          # Service ClusterIP
     ├── ingress.yaml          # Ingress TLS (Traefik + Let's Encrypt)
     ├── pvc.yaml              # PersistentVolumeClaims (Longhorn)
-    └── imagepullsecret.yaml  # Secret pour le pull d'images privées
+    ├── imagepullsecret.yaml  # Stub ghcr-secret rempli par Reflector (imagePullSecret.mode=reflector)
+    └── vault-secrets.yaml    # SA vault-reader + SecretStore + ExternalSecret (secrets.enabled=true)
 ```
+
+### Secrets depuis Vault (`secrets.enabled`)
+
+Désactivé par défaut : le rendu est identique à l'existant (cluster actuel).
+Sur un nouveau cluster, l'ApplicationSet passe :
+
+```yaml
+cluster:
+  org: acme        # chemin Vault kubernetes-cluster/acme/prod/...
+  env: prod
+secrets:
+  enabled: true    # envFrom du Secret <org>-<projet>-env
+imagePullSecret:
+  mode: eso        # namespace labellisé devver.app/needs-ghcr, ghcr-secret créé par platform-secrets
+```
+
+Toutes les clés de `kubernetes-cluster/<org>/<env>/clients/<namespace>/app`
+(écrites par le backend, voir `docs/vault-integration-backend.md`) deviennent
+des variables d'environnement. `container.env` reste pour la config non
+sensible. Le ServiceAccount `vault-reader` ne peut lire que
+`clients/<son namespace>/*` (policy Vault templatée).

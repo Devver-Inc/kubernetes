@@ -50,3 +50,27 @@ Selector labels
 app.kubernetes.io/name: {{ include "mongo-template.mongoName" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
+
+{{/*
+Chemin Vault (relatif au mount KV) : <org>/<env>/clients/<namespace>
+*/}}
+{{- define "mongo-template.vaultPath" -}}
+{{- $org := required "cluster.org est requis quand secrets.enabled=true" .Values.cluster.org -}}
+{{- $env := required "cluster.env est requis quand secrets.enabled=true" .Values.cluster.env -}}
+{{- printf "%s/%s/clients/%s" $org $env (include "mongo-template.namespace" .) -}}
+{{- end }}
+
+{{/* Mount de l'auth Kubernetes Vault : k8s-<org>-<env> par défaut */}}
+{{- define "mongo-template.vaultAuthMount" -}}
+{{- default (printf "k8s-%s-%s" .Values.cluster.org .Values.cluster.env) .Values.secrets.vault.authMount -}}
+{{- end }}
+
+{{/*
+Garde-fou Vault (template ESO v2, dans target.template.metadata.annotations) :
+échoue si une valeur lue dans Vault est vide ou vaut CHANGEME. ESO ne crée /
+ne modifie alors pas le Secret : le pod ne démarre pas tant que la valeur
+n'est pas renseignée (même règle que le chart platform-secrets).
+*/}}
+{{- define "mongo-template.vaultCheck" -}}
+devver.app/vault-check: {{ `{{ range $k, $v := . }}{{ if or (eq (trim $v) "") (eq (upper (trim $v)) "CHANGEME") }}{{ fail (printf "cle %s vide ou CHANGEME dans Vault" $k) }}{{ end }}{{ end }}ok` | squote }}
+{{- end }}

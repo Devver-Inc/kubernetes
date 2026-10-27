@@ -30,4 +30,4 @@ spec:
             timeoutSeconds: 3
             failureThreshold: 3
       imagePullSecrets:
-        - name: ghcr-devver
+        - name: ghcr-secret
