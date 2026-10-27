@@ -26,7 +26,6 @@ spec:
       secretName: backend-service-tls
 ---
 ---
-# Routes appelées seulement depuis le cluster (agents, git-gateway) : fermées en public.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
