@@ -13,6 +13,7 @@ spec:
       labels:
         app: backend-service
     spec:
+      serviceAccountName: backend-service
       imagePullSecrets:
       - name: ghcr-secret
       containers:
@@ -25,6 +26,19 @@ spec:
         envFrom:
         - secretRef:
             name: backend-secret
+        env:
+        - name: BACKEND_INTERNAL_URL
+          value: "http://backend-service.devver-backend-service.svc.cluster.local:3000/api/v1"
+        - name: GIT_SSH_HOST
+          value: "git.devver.app"
+        - name: VAULT_ADDR
+          value: "https://vault.devver.app"
+        - name: VAULT_KV_MOUNT
+          value: "devver_K8s"
+        - name: VAULT_AUTH_MOUNT
+          value: "devver_k8s_prod"
+        - name: VAULT_ROLE
+          value: "backend-service"
         resources:
           requests:
             memory: "256Mi"

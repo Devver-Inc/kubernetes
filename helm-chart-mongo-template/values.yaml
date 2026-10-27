@@ -4,12 +4,9 @@
 namespace:
   create: false
 
-organization:
-  name: "orgt1"       # Nom de l'organisation
-  domain: "devver.app"
-
 project:
-  name: "projt1"      # Nom du projet
+  id: ""
+  name: ""
 
 # Image MongoDB
 image:
@@ -23,13 +20,6 @@ replicaCount: 1
 
 # Nom du ReplicaSet interne MongoDB
 replicaSetName: "rs0"
-
-# Credentials MongoDB (en clair — Vault à venir)
-auth:
-  rootUsername: "root"
-  rootPassword: "changeme"
-  # La connection string peut être reconstruite :
-  # mongodb://rootUsername:rootPassword@<fullname>:27017
 
 # Persistent storage
 persistence:

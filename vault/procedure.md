@@ -54,3 +54,54 @@ vault write auth/devver_k8s_prod/config \
 -----END CERTIFICATE-----" \
   token_reviewer_jwt="" \
   disable_iss_validation=true
+
+------
+
+## Rôles et politiques Devver (deploy-agent, backend, git-gateway)
+
+KV v2 `devver_K8s`, auth Kubernetes `devver_k8s_prod`, lus par ESO.
+
+```bash
+ACCESSOR=$(vault auth list -format=json | jq -r '.["devver_k8s_prod/"].accessor')
+
+# Un seul rôle pour tous les projets : chaque namespace p-<id> ne lit que son propre chemin.
+vault policy write deploy-agent-eso - <<POLICY
+path "devver_K8s/data/projects/{{identity.entity.aliases.$ACCESSOR.metadata.service_account_namespace}}/agent" { capabilities = ["read"] }
+path "devver_K8s/data/projects/{{identity.entity.aliases.$ACCESSOR.metadata.service_account_namespace}}/mongo" { capabilities = ["read"] }
+path "devver_K8s/data/shared/git-gateway" { capabilities = ["read"] }
+POLICY
+vault write auth/devver_k8s_prod/role/deploy-agent-eso \
+  bound_service_account_names=deploy-agent-eso \
+  bound_service_account_namespaces="p-*" \
+  token_policies=deploy-agent-eso token_ttl=10m
+
+vault policy write backend-service - <<'POLICY'
+path "devver_K8s/data/backend" { capabilities = ["read"] }
+path "devver_K8s/data/projects/*" { capabilities = ["create", "update", "read"] }
+path "devver_K8s/metadata/projects/*" { capabilities = ["delete", "list"] }
+POLICY
+vault write auth/devver_k8s_prod/role/backend-service \
+  bound_service_account_names=backend-service \
+  bound_service_account_namespaces=devver-backend-service \
+  token_policies=backend-service token_ttl=1h
+
+vault policy write git-gateway - <<'POLICY'
+path "devver_K8s/data/git-gateway" { capabilities = ["read"] }
+POLICY
+vault write auth/devver_k8s_prod/role/git-gateway \
+  bound_service_account_names=git-gateway \
+  bound_service_account_namespaces=devver-git-gateway \
+  token_policies=git-gateway token_ttl=10m
+```
+
+Secrets à créer une fois :
+
+```bash
+vault kv put devver_K8s/backend @backend.json   # clés de backend-service/.env.example
+ssh-keygen -t ed25519 -N "" -f upstream && ssh-keygen -t ed25519 -N "" -f host
+vault kv put devver_K8s/git-gateway gatewaySecret="$(openssl rand -hex 32)" \
+  hostKey="$(base64 < host)" upstreamKey=@upstream
+vault kv put devver_K8s/shared/git-gateway publicKey=@upstream.pub
+```
+
+`gatewaySecret` = `GIT_GATEWAY_SECRET` du backend.

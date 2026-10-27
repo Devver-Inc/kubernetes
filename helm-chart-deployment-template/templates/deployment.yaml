@@ -6,7 +6,9 @@ metadata:
   labels:
     {{- include "app-template.labels" . | nindent 4 }}
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       {{- include "app-template.selectorLabels" . | nindent 6 }}
@@ -14,38 +16,49 @@ spec:
     metadata:
       labels:
         {{- include "app-template.selectorLabels" . | nindent 8 }}
+      {{- with .Values.annotations }}
       annotations:
-        {{- with .Values.annotations }}
         {{- toYaml . | nindent 8 }}
-        {{- end }}
+      {{- end }}
     spec:
+      # Le code des utilisateurs tourne dans ce pod : aucun token Kubernetes monté.
+      automountServiceAccountToken: false
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
-      - name: {{ .Values.project.name }}
-        image: {{ .Values.container.image }}
-        imagePullPolicy: Always
-        {{- if .Values.container.command }}
-        command: {{ toJson .Values.container.command }}
-        {{- end }}
-        {{- if .Values.container.args }}
-        args: {{ toJson .Values.container.args }}
-        {{- end }}
+      - name: deploy-agent
+        image: {{ .Values.agentImage }}
         ports:
         - name: http
-          containerPort: {{ .Values.container.port }}
-          protocol: TCP
-        
-        {{- if .Values.container.env }}
+          containerPort: 80
+        - name: api
+          containerPort: 8080
+        - name: ssh
+          containerPort: 22
+        envFrom:
+        - secretRef:
+            name: deploy-agent-env
+        {{- with .Values.container.env }}
         env:
-        {{- range $key, $value := .Values.container.env }}
+        {{- range $key, $value := . }}
         - name: {{ $key }}
           value: {{ $value | quote }}
         {{- end }}
         {{- end }}
-        
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: api
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: api
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          failureThreshold: 4
         resources:
           requests:
             memory: {{ .Values.resources.requests.memory }}
@@ -55,17 +68,17 @@ spec:
             cpu: {{ .Values.resources.limits.cpu }}
         {{- if .Values.persistence.enabled }}
         volumeMounts:
-        - name: {{ include "app-template.pvcNameApp" . }}
+        - name: app
           mountPath: {{ .Values.persistence.app.mountPath }}
-        - name: {{ include "app-template.pvcNameRoot" . }}
+        - name: root
           mountPath: {{ .Values.persistence.root.mountPath }}
         {{- end }}
       {{- if .Values.persistence.enabled }}
       volumes:
-      - name: {{ include "app-template.pvcNameApp" . }}
+      - name: app
         persistentVolumeClaim:
           claimName: {{ include "app-template.pvcNameApp" . }}
-      - name: {{ include "app-template.pvcNameRoot" . }}
+      - name: root
         persistentVolumeClaim:
           claimName: {{ include "app-template.pvcNameRoot" . }}
       {{- end }}

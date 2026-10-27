@@ -9,17 +9,17 @@ spec:
         repoURL: https://github.com/Devver-Inc/argocd-client-deployment.git
         revision: main
         files:
-          - path: "*/**/values-mongo.yaml"   # déclenche uniquement si ce fichier existe
+          - path: "p-*/values-mongo.yaml"   # déclenche uniquement si ce fichier existe
 
   template:
     metadata:
-      name: "{{path[0]}}-{{path[1]}}-mongo"
+      name: "{{path[0]}}-mongo"
     spec:
       project: default
 
       destination:
         server: https://kubernetes.default.svc
-        namespace: "{{path[0]}}-{{path[1]}}"
+        namespace: "{{path[0]}}"
 
       ignoreDifferences:
         - kind: Secret
@@ -33,7 +33,7 @@ spec:
           path: helm-chart-mongo-template
           helm:
             valueFiles:
-              - $values/{{path[0]}}/{{path[1]}}/values-mongo.yaml
+              - $values/{{path[0]}}/values-mongo.yaml
 
         # Repo values
         - repoURL: https://github.com/Devver-Inc/argocd-client-deployment.git

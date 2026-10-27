@@ -9,16 +9,17 @@ spec:
         repoURL: https://github.com/Devver-Inc/argocd-client-deployment.git
         revision: main
         directories:
-          - path: "*/*"   # clientX/projetX
+          - path: "p-*"   # p-<projectId>
 
   template:
     metadata:
-      name: "{{path[0]}}-{{path[1]}}"
+      name: "{{path[0]}}"
     spec:
       project: default
 
       destination:
         server: https://kubernetes.default.svc
+        namespace: "{{path[0]}}"
 
       ignoreDifferences:
         - kind: Secret
@@ -36,7 +37,7 @@ spec:
           path: helm-chart-deployment-template
           helm:
             valueFiles:
-              - $values/{{path[0]}}/{{path[1]}}/values.yaml
+              - $values/{{path[0]}}/values.yaml
 
         # Repo values
         - repoURL: https://github.com/Devver-Inc/argocd-client-deployment.git

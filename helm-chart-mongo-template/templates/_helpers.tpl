@@ -1,22 +1,13 @@
-{{/*
-Fullname : nomorga-nomprojet
-*/}}
-{{- define "mongo-template.fullname" -}}
-{{- printf "%s-%s" (lower .Values.organization.name) (lower .Values.project.name) | trunc 63 | trimSuffix "-" }}
-{{- end }}
-
-{{/*
-Nom du déploiement MongoDB : nomorga-nomprojet-mongo
-*/}}
-{{- define "mongo-template.mongoName" -}}
-{{- printf "%s-mongo" (include "mongo-template.fullname" .) | trunc 63 | trimSuffix "-" }}
-{{- end }}
-
-{{/*
-Namespace : nomorga-nomprojet
-*/}}
 {{- define "mongo-template.namespace" -}}
-{{- printf "%s-%s" (lower .Values.organization.name) (lower .Values.project.name) | trunc 63 | trimSuffix "-" }}
+{{- printf "p-%s" (required "project.id est obligatoire" .Values.project.id) }}
+{{- end }}
+
+{{- define "mongo-template.fullname" -}}
+{{- include "mongo-template.namespace" . }}
+{{- end }}
+
+{{- define "mongo-template.mongoName" -}}
+{{- printf "%s-mongo" (include "mongo-template.namespace" .) }}
 {{- end }}
 
 {{/*
@@ -34,8 +25,7 @@ helm.sh/chart: {{ include "mongo-template.chart" . }}
 app.kubernetes.io/name: {{ include "mongo-template.mongoName" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
-organization: {{ .Values.organization.name }}
-project: {{ .Values.project.name }}
+devver.app/project-id: {{ .Values.project.id | quote }}
 {{- with .Values.labels }}
 {{- range $key, $value := . }}
 {{ $key }}: {{ $value | quote }}
