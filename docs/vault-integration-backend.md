@@ -92,7 +92,11 @@ KV v2, l'API insère `data/` après le mount : `kubernetes-cluster/data/<org>/<e
    `{ "username": "root", "password": "<généré>" }`. Le mot de passe doit être
    **alphanumérique uniquement** : il est inséré tel quel dans la connection
    string.
-4. **Seulement ensuite**, commiter les values dans `argocd-client-deployment`.
+4. **Seulement ensuite**, commiter les values dans `argocd-client-deployment`,
+   **sous le dossier du cluster** : `${GITHUB_PATH_PREFIX}/<org client>/<projet>/`
+   (`GITHUB_PATH_PREFIX` = `<org>-<env>`, fourni par la ConfigMap du backend ;
+   vide sur le cluster de prod actuel = racine du repo). L'ApplicationSet de
+   chaque cluster ne lit que son dossier.
 
    **`values.yaml`** : plus aucun secret. `DEVVER_SECRET` est retiré de
    `container.env`.

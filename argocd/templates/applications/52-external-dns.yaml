@@ -1,0 +1,35 @@
+{{- if .Values.components.externalDns }}
+# Enregistrements DNS Cloudflare des Ingress du cluster — désactivé par
+# défaut : sera configuré avec le Traefik frontal (étape ultérieure).
+{{ include "root.appMeta" (dict "name" "external-dns" "wave" "0") }}
+spec:
+  project: platform
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: external-dns
+  source:
+    repoURL: https://kubernetes-sigs.github.io/external-dns/
+    chart: external-dns
+    targetRevision: {{ .Values.versions.externalDns }}
+    helm:
+      releaseName: external-dns
+      valuesObject:
+        provider:
+          name: cloudflare
+        env:
+          - name: CF_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: cloudflare-api-key
+                key: apiKey
+        sources:
+          - ingress
+        domainFilters:
+          - {{ include "root.domain" . }}
+        policy: upsert-only
+        registry: txt
+        txtOwnerId: {{ include "root.clusterId" . }}
+        interval: 1m
+        annotationFilter: external-dns.alpha.kubernetes.io/target
+  {{- include "root.syncPolicy" (dict "opts" (list)) | nindent 2 }}
+{{- end }}

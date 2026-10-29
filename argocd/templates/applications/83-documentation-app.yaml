@@ -1,0 +1,1 @@
+{{ include "root.stackApp" (dict "ctx" $ "name" "documentation-app" "wave" "3" "path" "documentation-app" "namespace" "devver-documentation-app" "storage" false) }}

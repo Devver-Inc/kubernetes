@@ -1,0 +1,8 @@
+# Valeurs par défaut = cluster de prod actuel. Les nouveaux clusters reçoivent
+# leur PROPRE partage (Terraform nfs_server / nfs_share -> Application ArgoCD
+# "storage") : un partage par cluster, accès NFS réservé aux IP de ses noeuds.
+storageClassName: nfs-devver-prod
+default: true
+nfs:
+  server: 192.168.10.5
+  share: /volume1/NFS_K8S_DEVVER_PROD

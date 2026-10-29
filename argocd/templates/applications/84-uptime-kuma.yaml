@@ -1,0 +1,1 @@
+{{ include "root.stackApp" (dict "ctx" $ "name" "uptime-kuma" "wave" "3" "path" "uptime-kuma" "namespace" "devver-uptime-kuma" "storage" true) }}

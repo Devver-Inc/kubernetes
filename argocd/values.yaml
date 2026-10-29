@@ -1,0 +1,43 @@
+# Valeurs fournies par la pipeline (cluster-k8s-deployment,
+# ansible/playbooks/06-argocd-bootstrap.yml) en paramètres Helm de
+# l'Application racine — rien n'est écrit par cluster dans ce repo.
+cluster:
+  org: ""          # requis — ex: vr27
+  env: ""          # requis — prod | staging | dev
+  domain: ""       # requis — <org>-<env>.devver.app
+  ingressIP: ""    # IP MetalLB de Traefik (informatif, DNS / Traefik frontal plus tard)
+
+# Partage NFS DÉDIÉ au cluster (Terraform nfs_server / nfs_share).
+nfs:
+  server: ""
+  share: ""
+
+git:
+  kubernetes:
+    repoURL: git@github.com:Devver-Inc/kubernetes.git
+    revision: main        # branche pendant les tests, tag en prod
+  clientDeployment:
+    repoURL: git@github.com:Devver-Inc/argocd-client-deployment.git
+    revision: main
+
+vaultAddr: https://vault.devver.app
+acmeEmail: info@devver.app
+
+# Cible external-dns (CNAME) des Ingress. Vide tant que le Traefik frontal et
+# le DNS Cloudflare ne sont pas en place (étape ultérieure).
+dnsTarget: ""
+
+# Composants activables (désactivés tant que leur configuration n'est pas prête)
+components:
+  externalDns: false   # routes / DNS Cloudflare : étape ultérieure
+  kasten: false        # sauvegardes : configuration détaillée plus tard
+
+# Versions figées des charts / sources externes
+versions:
+  argocd: 10.10.3          # chart argo-cd (Argo CD v3.5.5)
+  externalSecrets: 2.11.0
+  certManager: v1.21.2
+  csiDriverNfs: v4.9.0
+  externalSnapshotter: v8.2.0
+  externalDns: 1.23.0
+  kasten: 8.5.12

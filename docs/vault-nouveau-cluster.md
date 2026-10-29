@@ -29,15 +29,17 @@ Le cluster de prod actuel n'est pas concerné.
 
 ## Qui crée quoi
 
-| Étape | Outil | Résultat |
+| Étape (pipeline `provision-cluster.yml`) | Outil | Résultat |
 |---|---|---|
-| Création du cluster (`create-cluster`) | `terraform/vault/k8s-secrets.tf` | mount `kubernetes-cluster`, auth `k8s-<org>-<env>`, policies, rôles. **Aucune valeur.** |
-| Configuration (`configure`) | `ansible/playbooks/05-vault-k8s.yml` | token reviewer `kube-system/vault-auth`, config de l'auth (API + CA), **initialisation des valeurs** |
-| Saisie | console Vault, à la main | valeurs qui viennent d'un tiers ou qui n'existent qu'après l'install |
-| Déploiement | ArgoCD : ESO, puis chart `platform-secrets`, puis apps | Secrets K8s synchronisés |
+| `detect` | `terraform/vault/k8s-secrets.tf` | mount `kubernetes-cluster`, auth `k8s-<org>-<env>`, policies, rôles. **Aucune valeur.** |
+| `prepare-secrets` (avant toute VM) | `ansible/playbooks/05-vault-seed.yml` | **initialisation des valeurs** (générées, fixes, copies des secrets communs, `CHANGEME`) ; arrêt si un secret VM ou bloquant manque |
+| `configure` | `05-vault-k8s.yml` | token reviewer `kube-system/vault-auth`, config de l'auth (API + CA) |
+| `configure` | `06-argocd-bootstrap.yml` | ArgoCD + Application racine (`argocd/`), qui déploie toute la stack par vagues ; mot de passe admin Argo et `ARGOCD_API_KEY` poussés dans Vault |
+| Saisie | console Vault, à la main | secrets VM du cluster ; secrets communs une seule fois ; Logto après l'installation |
 
-Le playbook 05 suit le catalogue `ansible/vars/vault-k8s-secrets.yml`. Il ne
-réécrit **jamais** une clé existante : on peut le relancer sans risque.
+Le catalogue est `ansible/vars/vault-k8s-secrets.yml` (cluster-k8s-deployment).
+Une clé existante n'est **jamais** réécrite, sauf une clé commune encore à
+`CHANGEME`, recopiée dès que la valeur commune existe.
 
 ## Garde-fou : pas de pod tant qu'un secret n'est pas renseigné
 
@@ -68,72 +70,51 @@ dans `_helpers.tpl` de chaque chart, à placer dans
 
 ## Catalogue des secrets de la stack
 
-| Chemin `kubernetes-cluster/<org>/<env>/…` | Clé | Origine | Consommé par (Secret K8s) |
+| Chemin `kubernetes-cluster/<org>/<env>/…` | Clé | Classe | Consommé par (Secret K8s) |
 |---|---|---|---|
-| `cloudflare` | `api_token` | **à saisir** (token Cloudflare *Zone:DNS:Edit*) | `cert-manager/cloudflare-dns`, `external-dns/cloudflare-api-key` |
-| `ghcr` | `username`, `token` | **à saisir** (PAT `read:packages`) | `ghcr-secret` dans chaque namespace `needs-ghcr` |
-| `github` | `token` | **à saisir** (PAT d'écriture sur `argocd-client-deployment`) | `backend-secret` → `GITHUB_TOKEN` |
-| `minio` | `root_user` | fixe : `devver-admin` | `minio-credentials`, `backend-secret` → `STORAGE_ACCESS_KEY` |
-| `minio` | `root_password` | généré | `minio-credentials`, `backend-secret` → `STORAGE_SECRET_KEY` |
-| `logto-postgres` | `username` | fixe : `logto` | `logto-postgres-secret` |
-| `logto-postgres` | `password` | généré | `logto-postgres-secret` |
+| `cloudflare` | `api_token` | **commun** (token Cloudflare *Zone:DNS:Edit*) | `cert-manager/cloudflare-dns`, `external-dns/cloudflare-api-key` |
+| `ghcr` | `username`, `token` | **commun** (PAT `read:packages`) | `ghcr-secret` dans chaque namespace `needs-ghcr` |
+| `github` | `token` | **commun** (PAT d'écriture sur `argocd-client-deployment`) | `backend-secret` → `GITHUB_TOKEN` |
+| `argocd-repos` | `kubernetes`, `client-deployment` | **commun** (clés privées SSH des deploy keys, lecture seule) | Secrets de repo d'ArgoCD (`argocd/repo-*`) |
+| `minio` | `root_user` / `root_password` | fixe `devver-admin` / généré | `minio-credentials`, `backend-secret` → `STORAGE_*` |
+| `logto-postgres` | `username` / `password` | fixe `logto` / généré | `logto-postgres-secret` |
 | `backend` | `ENCRYPTION_KEY` | généré (hex 64) | `backend-secret`. ⚠️ **ne jamais la changer** sans re-chiffrer la base |
 | `backend` | `DEPLOY_AGENT_SECRET`, `GIT_TOKEN_SECRET` | généré | `backend-secret` |
-| `backend` | `LOGTO_CLIENT_ID`, `LOGTO_SECRET`, `LOGTO_WEBHOOK_SIGNING_KEY` | **à saisir après l'install de Logto** | `backend-secret` |
-| `backend` | `ARGOCD_API_KEY` | **à saisir après l'install d'ArgoCD** | `backend-secret` |
-| `backend` | `VAULT_AUTH_MOUNT`, `VAULT_ROLE` | fixe : `k8s-<org>-<env>`, `backend` (auth Kubernetes du backend, aucun secret) | `backend-secret` |
-| `backend` | `VAULT_KV_PREFIX` | fixe : `kubernetes-cluster/<org>/<env>` | `backend-secret` |
+| `backend` | `ARGOCD_API_KEY` | **auto après installation** (pipeline) | `backend-secret` |
+| `backend` | `LOGTO_CLIENT_ID`, `LOGTO_SECRET`, `LOGTO_WEBHOOK_SIGNING_KEY` | **à saisir après l'install de Logto** (non bloquant pour la pipeline) | `backend-secret` |
+| `backend` | `VAULT_AUTH_MOUNT`, `VAULT_ROLE`, `VAULT_KV_PREFIX` | fixe | `backend-secret` |
+| `argocd` | `admin_password` | **auto après installation** (copié depuis Argo) | — (connexion à l'UI) |
 
-Toutes les clés de `backend/` sont injectées dans `backend-secret`. La
-configuration non sensible est dans `backend-service/configmap.yaml`.
+**Secrets communs** : saisis **une seule fois** dans
+`devver-infra-deployment/shared/<chemin>` (mêmes noms de clés), copiés dans
+chaque nouveau cluster par la pipeline. Un cluster peut ensuite surcharger sa
+copie dans `kubernetes-cluster/<org>/<env>/<chemin>`.
 
 ## Procédure : nouveau cluster
 
-1. **Créer le cluster.** Copier `terraform/clusters/_template` vers
-   `clusters/<org>-<env>` et pousser. Le workflow *Provision cluster* crée la
-   structure Vault, les VMs et RKE2, puis lance le playbook 05.
-   À la fin du job `configure`, la liste des clés restées à `CHANGEME` est
-   affichée.
+**Prérequis (une fois pour toutes)** :
+- 2 deploy keys SSH **en lecture seule** sur GitHub (`Devver-Inc/kubernetes`,
+  `Devver-Inc/argocd-client-deployment`) ; leurs clés privées dans
+  `devver-infra-deployment/shared/argocd-repos` (`kubernetes`,
+  `client-deployment`) ;
+- `devver-infra-deployment/shared/ghcr` (`username`, `token`),
+  `shared/github` (`token`), `shared/cloudflare` (`api_token`).
 
-2. **Saisir les secrets externes.** Console `https://vault.devver.app/ui` →
-   *Secrets engines* → `kubernetes-cluster` → `<org>/<env>/`. Pour chaque
-   chemin, *Create new version* et remplacer les `CHANGEME` de :
-   - `cloudflare` → `api_token` ;
-   - `ghcr` → `username`, `token` ;
-   - `github` → `token`.
-
-   Ces trois secrets sont nécessaires pour les certificats, le DNS et le pull
-   des images.
-
-3. **Déployer.** On passe par ArgoCD : ESO, puis `platform-secrets` (avec
-   `cluster.org` et `cluster.env`), puis la stack. En attendant l'app-of-apps :
-
-   ```bash
-   helm template platform-secrets ./platform-secrets \
-     --set cluster.org=<org> --set cluster.env=<env> | kubectl apply -f -
-   kubectl get clustersecretstore   # vault-platform et vault-ghcr : Ready=True
-   kubectl get externalsecret -A    # SecretSynced
-   ```
-
-   Tout démarre **sauf le backend** : son ExternalSecret reste en erreur
-   (`cle LOGTO_SECRET vide ou CHANGEME…`) et son pod en
-   `CreateContainerConfigError` tant que les clés Logto et ArgoCD ne sont pas
-   saisies. C'est attendu.
-
-4. **Saisir les secrets post-install.**
-   - Dans Logto : créer l'application backend et le webhook. Saisir
-     `LOGTO_CLIENT_ID`, `LOGTO_SECRET` et `LOGTO_WEBHOOK_SIGNING_KEY` dans
-     `backend`.
-   - Dans ArgoCD : `argocd account generate-token --account backend-api`, puis
-     saisir le résultat dans `backend` → `ARGOCD_API_KEY`.
-
-5. **Forcer la synchro**, sans attendre le refresh (15 min). Le pod du
-   backend démarre seul dès que le Secret existe :
-
+**Par cluster** :
+1. Créer son **partage NFS dédié** sur le NAS (accès réservé aux IP du cluster).
+2. Copier `terraform/clusters/_template` vers `clusters/<org>-<env>` (dont
+   `nfs_server`, `nfs_share`, `kubernetes_git_revision`), pousser, puis lancer
+   *Provision cluster* (`workflow_dispatch`, `org=<org>-<env>`). Le 1er
+   lancement prépare tous les secrets et s'arrête en listant ce qui manque.
+3. Saisir les secrets VM (`devver-infra-deployment/<org>/<env>`), relancer
+   le même workflow : VMs, RKE2, Vault, ArgoCD, puis la stack par vagues.
+4. Après l'installation : créer l'application backend et le webhook dans
+   Logto, saisir `LOGTO_*` dans `backend`, forcer la synchro :
    ```bash
    kubectl -n devver-backend-service annotate externalsecret backend-secret \
      force-sync=$(date +%s) --overwrite
    ```
+   Le backend démarre seul dès que le Secret existe.
 
 ## Opérations courantes
 

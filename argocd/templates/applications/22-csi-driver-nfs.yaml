@@ -1,0 +1,20 @@
+{{ include "root.appMeta" (dict "name" "csi-driver-nfs" "wave" "-3") }}
+spec:
+  project: platform
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+  source:
+    repoURL: https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts
+    chart: csi-driver-nfs
+    targetRevision: {{ .Values.versions.csiDriverNfs }}
+    helm:
+      valuesObject:
+        kubeletDir: /var/lib/kubelet
+        driver:
+          name: nfs.csi.k8s.io
+        storageClass:
+          create: false
+        externalSnapshotter:
+          enabled: false
+  {{- include "root.syncPolicy" (dict "opts" (list "ServerSideApply=true")) | nindent 2 }}

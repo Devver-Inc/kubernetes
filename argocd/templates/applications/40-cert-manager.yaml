@@ -1,0 +1,16 @@
+{{ include "root.appMeta" (dict "name" "cert-manager" "wave" "-1") }}
+spec:
+  project: platform
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cert-manager
+  source:
+    repoURL: https://charts.jetstack.io
+    chart: cert-manager
+    targetRevision: {{ .Values.versions.certManager }}
+    helm:
+      releaseName: cert-manager
+      valuesObject:
+        crds:
+          enabled: true
+  {{- include "root.syncPolicy" (dict "opts" (list "ServerSideApply=true")) | nindent 2 }}

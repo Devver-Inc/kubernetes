@@ -1,0 +1,39 @@
+# AppProjects : "platform" pour la stack Devver, "clients" pour les
+# déploiements des clients (ApplicationSets) — un client ne peut créer que des
+# objets dans des namespaces (pas d'objet cluster-scoped hors Namespace).
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: platform
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-6"
+spec:
+  description: Stack Devver du cluster {{ include "root.clusterId" . }}
+  sourceRepos:
+    - "*"
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: "*"
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: clients
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-6"
+spec:
+  description: Déploiements des clients (argocd-client-deployment/{{ include "root.clusterId" . }}/)
+  sourceRepos:
+    - {{ .Values.git.kubernetes.repoURL }}
+    - {{ .Values.git.clientDeployment.repoURL }}
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: "*"
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace

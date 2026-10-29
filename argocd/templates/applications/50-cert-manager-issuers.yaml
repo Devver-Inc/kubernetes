@@ -1,0 +1,18 @@
+# letsencrypt-cloudflare (DNS-01, token Cloudflare via ESO) + CA interne
+# (internal-ca, utilisée par les MongoDB clients).
+{{ include "root.appMeta" (dict "name" "cert-manager-issuers" "wave" "0") }}
+spec:
+  project: platform
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cert-manager
+  source:
+    repoURL: {{ .Values.git.kubernetes.repoURL }}
+    targetRevision: {{ .Values.git.kubernetes.revision }}
+    path: cert-manager
+    helm:
+      valuesObject:
+        namespace:
+          create: false
+        acmeEmail: {{ .Values.acmeEmail }}
+  {{- include "root.syncPolicy" (dict "opts" (list)) | nindent 2 }}

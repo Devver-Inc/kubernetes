@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: backend-service-ingress
+  namespace: devver-backend-service
+  annotations:
+    {{- with .Values.dnsTarget }}
+    external-dns.alpha.kubernetes.io/target: {{ . }}
+    {{- end }}
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: app.{{ .Values.domain }}
+      http:
+        paths:
+          - path: /api/v1
+            pathType: Prefix
+            backend:
+              service:
+                name: backend-service
+                port:
+                  number: 3000
+  tls:
+    - hosts:
+        - app.{{ .Values.domain }}
+      secretName: backend-service-tls
+---

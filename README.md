@@ -39,6 +39,7 @@ Domaine principal : `devver.app` — HTTPS automatique sur tous les services.
 | [frontend-app/](frontend-app/) | Déploiement de l'application frontend |
 | [helm-chart-deployment-template/](helm-chart-deployment-template/) | Chart Helm réutilisable pour déployer une app |
 | [helm-chart-mongo-template/](helm-chart-mongo-template/) | Chart Helm StatefulSet MongoDB avec ReplicaSet et TLS |
+| [argocd/](argocd/) | **Application racine** d'un nouveau cluster : déploie toute la stack par vagues ([détail](argocd/README.md)) |
 | [platform-secrets/](platform-secrets/) | Secrets de la stack synchronisés depuis Vault par External Secrets Operator ([procédure](docs/vault-nouveau-cluster.md)) |
 | [kasten/](kasten/) | Sauvegardes et restauration Kubernetes |
 | [landing-page/](landing-page/) | Déploiement de la landing page |

@@ -1,0 +1,19 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: {{ .Values.storageClassName }}
+  annotations:
+    storageclass.kubernetes.io/is-default-class: {{ .Values.default | quote }}
+provisioner: nfs.csi.k8s.io
+parameters:
+  server: {{ .Values.nfs.server }}
+  share: {{ .Values.nfs.share }}
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+allowVolumeExpansion: false
+mountOptions:
+  - vers=3
+  - nolock
+  - hard
+  - timeo=600
+  - retrans=3

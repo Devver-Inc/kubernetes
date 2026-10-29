@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: logto-postgres-pvc-nfs
+  namespace: devver-logto
+spec:
+  storageClassName: {{ .Values.storageClass }}
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi

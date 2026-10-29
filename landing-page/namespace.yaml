@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: devver-landing-page
-  labels:
-    kasten-backup-prod-ns: "true"
-    devver.app/needs-ghcr: "true"

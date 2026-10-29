@@ -1,0 +1,2 @@
+{{- $extra := dict "vaultAddr" .Values.vaultAddr "github" (dict "pathPrefix" (include "root.clusterId" .) "branch" .Values.git.clientDeployment.revision) }}
+{{ include "root.stackApp" (dict "ctx" $ "name" "backend-service" "wave" "3" "path" "backend-service" "namespace" "devver-backend-service" "storage" false "extra" $extra) }}

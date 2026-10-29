@@ -1,0 +1,55 @@
+# ArgoCD se gère lui-même (même chart et même release "argocd" que le
+# bootstrap de la pipeline, qui ne fait qu'un helm install minimal).
+{{- $domain := include "root.domain" . }}
+{{ include "root.appMeta" (dict "name" "argocd" "wave" "-5") }}
+spec:
+  project: platform
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  source:
+    repoURL: https://argoproj.github.io/argo-helm
+    chart: argo-cd
+    targetRevision: {{ .Values.versions.argocd }}
+    helm:
+      releaseName: argocd
+      valuesObject:
+        global:
+          domain: argocd.{{ $domain }}
+        configs:
+          params:
+            # TLS terminé par Traefik
+            server.insecure: true
+          cm:
+            timeout.reconciliation: 30s
+            # Compte utilisé par le backend Devver (token généré par la pipeline,
+            # 06-argocd-bootstrap.yml -> Vault backend/ARGOCD_API_KEY)
+            accounts.backend-api: apiKey
+            # Santé des Applications (app-of-apps) : sans ça, une vague
+            # n'attend pas que les Applications de la vague précédente soient Healthy.
+            resource.customizations.health.argoproj.io_Application: |
+              hs = {}
+              hs.status = "Progressing"
+              hs.message = ""
+              if obj.status ~= nil and obj.status.health ~= nil then
+                hs.status = obj.status.health.status
+                if obj.status.health.message ~= nil then
+                  hs.message = obj.status.health.message
+                end
+              end
+              return hs
+          rbac:
+            policy.csv: |
+              p, backend-api, applications, *, */*, allow
+        server:
+          ingress:
+            enabled: true
+            ingressClassName: traefik
+            tls: true
+            annotations:
+              traefik.ingress.kubernetes.io/router.entrypoints: websecure
+              cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+              {{- with .Values.dnsTarget }}
+              external-dns.alpha.kubernetes.io/target: {{ . }}
+              {{- end }}
+  {{- include "root.syncPolicy" (dict "prune" false "opts" (list "ServerSideApply=true")) | nindent 2 }}

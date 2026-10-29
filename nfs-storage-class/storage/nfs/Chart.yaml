@@ -1,0 +1,6 @@
+apiVersion: v2
+name: nfs-storage
+description: StorageClass (classe par défaut) et VolumeSnapshotClass sur le partage NFS du cluster (driver nfs.csi.k8s.io)
+type: application
+version: 0.1.0
+appVersion: "1.0"

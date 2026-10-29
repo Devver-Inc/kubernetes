@@ -1,0 +1,1 @@
+{{ include "root.stackApp" (dict "ctx" $ "name" "minio" "wave" "2" "path" "minio" "namespace" "devver-minio" "storage" true) }}

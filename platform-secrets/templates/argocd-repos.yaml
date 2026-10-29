@@ -1,0 +1,42 @@
+# Secrets de repo d'ArgoCD (deploy keys SSH en lecture seule), depuis Vault.
+# creationPolicy Merge : le Secret existe déjà (créé au bootstrap par la
+# pipeline, avant qu'ESO soit installé) ; ESO y fusionne les valeurs de Vault
+# sans en prendre la propriété — une rotation de la clé dans Vault est ainsi
+# reprise sans recréer le Secret.
+{{- $prefix := include "platform-secrets.prefix" . }}
+{{- range .Values.argocdRepos }}
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: {{ .name }}
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  labels:
+    {{- include "platform-secrets.labels" $ | nindent 4 }}
+spec:
+  refreshInterval: {{ $.Values.refreshInterval }}
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: vault-platform
+  target:
+    name: {{ .name }}
+    creationPolicy: Merge
+    template:
+      engineVersion: v2
+      metadata:
+        labels:
+          argocd.argoproj.io/secret-type: repository
+        annotations:
+          {{- include "platform-secrets.vaultCheck" $ | nindent 10 }}
+      data:
+        type: git
+        url: {{ .url | quote }}
+        sshPrivateKey: {{ `{{ .sshPrivateKey }}` | squote }}
+  data:
+    - secretKey: sshPrivateKey
+      remoteRef:
+        key: {{ $prefix }}/argocd-repos
+        property: {{ .key }}
+{{- end }}

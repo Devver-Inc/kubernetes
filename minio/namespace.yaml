@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: devver-minio
-  labels:
-    kasten-backup-prod-ns: "true"
-    devver.app/secrets-tier: platform

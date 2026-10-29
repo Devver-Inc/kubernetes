@@ -1,0 +1,1 @@
+{{ include "root.stackApp" (dict "ctx" $ "name" "logto" "wave" "2" "path" "logto" "namespace" "devver-logto" "storage" true) }}

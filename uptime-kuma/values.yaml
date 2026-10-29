@@ -1,0 +1,16 @@
+# Valeurs par défaut = cluster de prod actuel (devver.app, appliqué à la main).
+# Les nouveaux clusters reçoivent les leurs de leur Application ArgoCD
+# (argocd/templates/applications/).
+
+# Domaine du cluster : les hôtes sont <sous-domaine>.<domain>.
+domain: devver.app
+
+# Cible external-dns (CNAME) des Ingress ; vide = pas d'annotation (nouveaux
+# clusters, en attendant le Traefik frontal / DNS Cloudflare).
+dnsTarget: reverse-proxy.vrhometech.fr
+
+# false sur les nouveaux clusters : namespaces créés par platform-secrets.
+namespace:
+  create: true
+
+storageClass: nfs-devver-prod

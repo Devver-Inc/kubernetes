@@ -45,6 +45,25 @@ namespaces:
     ghcr: true
   - name: devver-documentation-app
     ghcr: true
+  - name: devver-mongodb
+  - name: devver-uptime-kuma
+  # Secrets de repo d'ArgoCD (deploy keys) : voir argocdRepos ci-dessous.
+  - name: argocd
+    platform: true
+
+# Accès d'ArgoCD aux repos privés : un Secret de repo (label
+# argocd.argoproj.io/secret-type=repository) par repo, clé privée SSH de sa
+# deploy key lue dans kubernetes-cluster/<org>/<env>/argocd-repos (copiée
+# depuis devver-infra-deployment/shared/argocd-repos par la pipeline).
+# Créés une première fois par le bootstrap (cluster-k8s-deployment,
+# 06-argocd-bootstrap.yml), puis tenus à jour ici (creationPolicy Merge).
+argocdRepos:
+  - name: repo-kubernetes
+    url: git@github.com:Devver-Inc/kubernetes.git
+    key: kubernetes
+  - name: repo-client-deployment
+    url: git@github.com:Devver-Inc/argocd-client-deployment.git
+    key: client-deployment
 
 # Labels ajoutés à tous les namespaces ci-dessus
 namespaceLabels:

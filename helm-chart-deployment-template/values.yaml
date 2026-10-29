@@ -7,6 +7,10 @@ project:
   name: "projt1"  # Nom du projet
   #displayName: "projtest"  # Nom d'affichage
 
+# Cible external-dns (CNAME) de l'Ingress ; vide = pas d'annotation (nouveaux
+# clusters, en attendant le Traefik frontal / DNS Cloudflare).
+dnsTarget: "reverse-proxy.vrhometech.fr"
+
 imagePullSecrets:
   - name: ghcr-secret
 

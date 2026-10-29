@@ -1,0 +1,8 @@
+apiVersion: v2
+name: devver-root
+description: >-
+  Application racine ArgoCD (app-of-apps) d'un cluster Devver <org>-<env> :
+  déploie toute la stack par vagues (sync waves) et les ApplicationSets clients.
+type: application
+version: 0.1.0
+appVersion: "1.0"

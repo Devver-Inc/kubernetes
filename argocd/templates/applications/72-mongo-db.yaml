@@ -1,0 +1,1 @@
+{{ include "root.stackApp" (dict "ctx" $ "name" "mongo-db" "wave" "2" "path" "mongo-db" "namespace" "devver-mongodb" "storage" true) }}

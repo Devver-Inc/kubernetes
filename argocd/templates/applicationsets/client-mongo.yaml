@@ -1,0 +1,55 @@
+# MongoDB d'un projet client, si values-mongo.yaml existe à côté de son
+# values.yaml (même namespace que l'application, credentials depuis Vault).
+{{- $id := include "root.clusterId" . }}
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: client-mongo
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+spec:
+  generators:
+    - git:
+        repoURL: {{ .Values.git.clientDeployment.repoURL }}
+        revision: {{ .Values.git.clientDeployment.revision }}
+        files:
+          - path: {{ $id }}/*/*/values-mongo.yaml
+  template:
+    metadata:
+      name: {{ `'{{path[1]}}-{{path[2]}}-mongo'` }}
+    spec:
+      project: clients
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: {{ `'{{path[1]}}-{{path[2]}}'` }}
+      sources:
+        - repoURL: {{ .Values.git.kubernetes.repoURL }}
+          targetRevision: {{ .Values.git.kubernetes.revision }}
+          path: helm-chart-mongo-template
+          helm:
+            valueFiles:
+              - {{ `'$values/{{path}}/values-mongo.yaml'` }}
+            parameters:
+              - name: cluster.org
+                value: {{ .Values.cluster.org | quote }}
+              - name: cluster.env
+                value: {{ .Values.cluster.env | quote }}
+              - name: secrets.enabled
+                value: "true"
+              - name: persistence.storageClass
+                value: {{ include "root.storageClass" . | quote }}
+        - repoURL: {{ .Values.git.clientDeployment.repoURL }}
+          targetRevision: {{ .Values.git.clientDeployment.revision }}
+          ref: values
+      ignoreDifferences:
+        - kind: Secret
+          jqPathExpressions:
+            - .metadata.name | endswith("-mongo-keyfile")
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - PrunePropagationPolicy=foreground

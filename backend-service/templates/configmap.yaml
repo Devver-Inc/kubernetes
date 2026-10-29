@@ -1,0 +1,32 @@
+# Configuration NON sensible du backend. Les secrets (LOGTO_SECRET,
+# ENCRYPTION_KEY, STORAGE_*_KEY, GITHUB_TOKEN, ARGOCD_API_KEY, VAULT_*...)
+# sont dans le Secret backend-secret, synchronisé depuis Vault
+# (kubernetes-cluster/<org>/<env>/backend) par le chart platform-secrets.
+# LOGTO_CLIENT_ID est aussi dans Vault : il n'existe qu'après l'install de Logto.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: devver-backend-service
+data:
+  PORT: "3000"
+  NODE_ENV: "production"
+  FRONTEND_URL: "https://app.{{ .Values.domain }}"
+  DATABASE_URL: "mongodb://mongodb.devver-mongodb.svc.cluster.local:27017/"
+  DATABASE_NAME: "devver"
+  LOGTO_BASE_URL: "https://auth.{{ .Values.domain }}"
+  STORAGE_ENDPOINT: "http://minio-api-svc.devver-minio.svc.cluster.local:9000"
+  STORAGE_BUCKET: "devver"
+  STORAGE_REGION: "eu-west-2"
+  STORAGE_PUBLIC_URL: "minio-api-svc.devver-minio.svc.cluster.local/devver"
+  STORAGE_FORCE_PATH_STYLE: "true"
+  GITHUB_OWNER: {{ .Values.github.owner | quote }}
+  GITHUB_REPO: {{ .Values.github.repo | quote }}
+  GITHUB_BRANCH: {{ .Values.github.branch | quote }}
+  # Dossier du cluster dans le repo des déploiements clients (vide = racine,
+  # cluster de prod actuel ; nouveaux clusters : <org>-<env>).
+  GITHUB_PATH_PREFIX: {{ .Values.github.pathPrefix | quote }}
+  K8S_BASE_DOMAIN: {{ .Values.domain | quote }}
+  ARGOCD_BASE_URL: "https://argocd.{{ .Values.domain }}"
+  GIT_AUTH_URL: "https://app.{{ .Values.domain }}/api/v1"
+  VAULT_ADDR: {{ .Values.vaultAddr | quote }}

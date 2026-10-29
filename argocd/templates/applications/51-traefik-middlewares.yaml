@@ -1,0 +1,13 @@
+# Middleware security-headers (kube-system), référencé par le HelmChartConfig
+# rke2-traefik de la pipeline sur l'entrypoint websecure.
+{{ include "root.appMeta" (dict "name" "traefik-middlewares" "wave" "0") }}
+spec:
+  project: platform
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+  source:
+    repoURL: {{ .Values.git.kubernetes.repoURL }}
+    targetRevision: {{ .Values.git.kubernetes.revision }}
+    path: traefik/middlewares
+  {{- include "root.syncPolicy" (dict "opts" (list)) | nindent 2 }}

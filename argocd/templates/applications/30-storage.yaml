@@ -1,0 +1,19 @@
+# StorageClass par défaut sur le partage NFS DÉDIÉ au cluster.
+{{ include "root.appMeta" (dict "name" "storage" "wave" "-2") }}
+spec:
+  project: platform
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+  source:
+    repoURL: {{ .Values.git.kubernetes.repoURL }}
+    targetRevision: {{ .Values.git.kubernetes.revision }}
+    path: nfs-storage-class/storage/nfs
+    helm:
+      valuesObject:
+        storageClassName: {{ include "root.storageClass" . }}
+        default: true
+        nfs:
+          server: {{ required "nfs.server est requis" .Values.nfs.server }}
+          share: {{ required "nfs.share est requis" .Values.nfs.share }}
+  {{- include "root.syncPolicy" (dict "prune" false "opts" (list)) | nindent 2 }}

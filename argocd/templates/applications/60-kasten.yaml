@@ -1,0 +1,37 @@
+{{- if .Values.components.kasten }}
+# Sauvegardes — désactivé par défaut, configuration détaillée (cible de
+# sauvegarde par cluster, licence, blueprints) à revoir avant activation.
+{{ include "root.appMeta" (dict "name" "kasten" "wave" "1") }}
+spec:
+  project: platform
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kasten-io
+  source:
+    repoURL: https://charts.kasten.io/
+    chart: k10
+    targetRevision: {{ .Values.versions.kasten }}
+    helm:
+      valuesObject:
+        global:
+          persistence:
+            storageClass: {{ include "root.storageClass" . }}
+            accessMode: ReadWriteMany
+        kanister:
+          backupPVCStorageClass: {{ include "root.storageClass" . }}
+        ingress:
+          create: true
+          ingressClassName: traefik
+          host: kasten.{{ include "root.domain" . }}
+          urlPath: /k10/
+          annotations:
+            traefik.ingress.kubernetes.io/router.entrypoints: websecure
+            cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+          tls:
+            enabled: true
+            secretName: kasten-tls
+        auth:
+          tokenAuth:
+            enabled: true
+  {{- include "root.syncPolicy" (dict "prune" false "opts" (list "ServerSideApply=true")) | nindent 2 }}
+{{- end }}

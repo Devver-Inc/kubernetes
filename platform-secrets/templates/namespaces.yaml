@@ -6,6 +6,9 @@ metadata:
   name: {{ .name }}
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
+    # Jamais supprimé par ArgoCD (prune / suppression de l'Application) :
+    # un namespace porte des données (PVC) et des Secrets.
+    argocd.argoproj.io/sync-options: Delete=false
   labels:
     {{- include "platform-secrets.labels" $ | nindent 4 }}
     {{- with $.Values.namespaceLabels }}
