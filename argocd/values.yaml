@@ -32,12 +32,20 @@ components:
   externalDns: false   # routes / DNS Cloudflare : étape ultérieure
   kasten: false        # sauvegardes : configuration détaillée plus tard
 
+# Images dont la source a changé
+images:
+  minio:
+    repository: pgsty/minio            # minio/minio retiré de Docker Hub
+    tag: RELEASE.2026-08-04T00-00-00Z
+
 # Versions figées des charts / sources externes
 versions:
   argocd: 10.10.3          # chart argo-cd (Argo CD v3.5.5)
   externalSecrets: 2.11.0
   certManager: v1.21.2
   csiDriverNfs: v4.9.0
-  externalSnapshotter: v8.2.0
+  # externalSnapshotter : retiré — RKE2 >= 1.36 installe déjà les CRD et le
+  # contrôleur de snapshots (rke2-snapshot-controller*). À réévaluer avec
+  # Kasten (VolumeSnapshotClass / version des CRD requise).
   externalDns: 1.23.0
   kasten: 8.5.12

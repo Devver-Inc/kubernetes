@@ -32,8 +32,8 @@ argocd/
 |---|---|
 | −6 | AppProjects `platform`, `clients` |
 | −5 | `argocd` (ArgoCD se gère lui-même) |
-| −4 | `external-secrets`, `snapshot-crds` |
-| −3 | `platform-secrets` (namespaces, stores Vault, secrets de la stack, repos Argo), `snapshot-controller`, `csi-driver-nfs` |
+| −4 | `external-secrets` |
+| −3 | `platform-secrets` (namespaces, stores Vault, secrets de la stack, repos Argo), `csi-driver-nfs` |
 | −2 | `storage` (StorageClass `nfs-<org>-<env>` sur le partage du cluster) |
 | −1 | `cert-manager` |
 | 0 | `cert-manager-issuers`, `traefik-middlewares`, `external-dns` (désactivé) |
@@ -49,6 +49,9 @@ les vagues suivantes jusqu'à ce qu'il soit corrigé.
 
 ## Volontairement absent pour l'instant
 
+- **Snapshots de volumes** : pas d'Application dédiée, RKE2 >= 1.36 installe
+  déjà les CRD et le contrôleur (`rke2-snapshot-controller*`). À réévaluer
+  avec Kasten (version des CRD, VolumeSnapshotClass).
 - **DNS / exposition publique** : `dnsTarget` vide et `external-dns`
   désactivé — à configurer avec le Traefik frontal et les enregistrements
   Cloudflare (étape ultérieure).

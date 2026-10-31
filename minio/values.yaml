@@ -15,5 +15,10 @@ namespace:
 
 storageClass: nfs-devver-prod
 
+# minio/minio n'est plus publié sur Docker Hub (fin des images communautaires
+# MinIO) : la prod tourne sur l'image en cache de ses noeuds. Les nouveaux
+# clusters utilisent pgsty/minio (build communautaire maintenu, même
+# entrypoint), version figée par l'Application ArgoCD.
 image:
+  repository: minio/minio
   tag: latest
