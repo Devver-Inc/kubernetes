@@ -101,7 +101,10 @@ copie dans `kubernetes-cluster/<org>/<env>/<chemin>`.
   `shared/github` (`token`), `shared/cloudflare` (`api_token`).
 
 **Par cluster** :
-1. Créer son **partage NFS dédié** sur le NAS (accès réservé aux IP du cluster).
+1. Créer son **partage NFS dédié** sur le NAS (ex. `/volume1/NFS_K8S_<ORG>_<ENV>`),
+   avec la règle NFS : lecture/écriture, squash **Aucun mappage**, sécurité
+   `AUTH_SYS`, async ; mêmes permissions de dossier que le partage de la prod.
+   Lire la section [Stockage NFS : règle du NAS](#stockage-nfs--règle-du-nas).
 2. Copier `terraform/clusters/_template` vers `clusters/<org>-<env>` (dont
    `nfs_server`, `nfs_share`, `kubernetes_git_revision`), pousser, puis lancer
    *Provision cluster* (`workflow_dispatch`, `org=<org>-<env>`). Le 1er
@@ -128,14 +131,79 @@ copie dans `kubernetes-cluster/<org>/<env>/<chemin>`.
 - **Ajouter un secret à la stack.**
   1. Ajouter la clé au catalogue `ansible/vars/vault-k8s-secrets.yml`
      (`cluster-k8s-deployment`).
-  2. L'ajouter à l'ExternalSecret concerné dans
-     `platform-secrets/templates/externalsecrets.yaml`.
-  3. Relancer le playbook 05. Seule la nouvelle clé est créée.
+  2. L'ajouter à l'ExternalSecret concerné : `platform-secrets/templates/externalsecrets.yaml`,
+     ou `backend-service/templates/externalsecret.yaml` pour le backend.
+  3. Relancer la pipeline (job `prepare-secrets`, playbook `05-vault-seed.yml`) :
+     seule la nouvelle clé est créée.
 - **Supprimer un cluster.** Le job `vault-cleanup` retire l'auth, les
   policies et les rôles, purge `devver-infra-deployment/<org>/<env>`
   (`delete_all_versions`) et tous les chemins de `kubernetes-cluster/<org>/<env>/`,
   clients compris, **toutes versions comprises**. Ces secrets ne sont pas
   récupérables ensuite : à exporter avant si besoin.
+
+## Stockage NFS : règle du NAS
+
+Constaté sur le NAS (Ugreen) lors du premier déploiement complet (`vr27-dev`) :
+
+- **root** (aucun squash) peut tout faire ;
+- un **utilisateur non-root** n'a accès qu'aux dossiers **dont il est
+  propriétaire** — les droits « autres » sont ignorés, même en `777` ;
+- la **racine du volume** (dossier `pvc-…` créé par le driver NFS) doit rester à
+  root : attribuée à un autre utilisateur, elle lui devient inaccessible ;
+- l'**uid 1000** correspond à un compte du NAS : il est refusé partout, même
+  dans un dossier qui lui appartient.
+
+Règle pour toute application dont l'image ne tourne pas en root : un
+initContainer (root) crée un **sous-dossier** du volume et l'attribue à l'uid
+de l'image ; l'application écrit dans ce sous-dossier (ex. `subPath`). Ne
+jamais utiliser l'uid 1000.
+
+| Application | uid | Dossier attribué |
+|---|---|---|
+| Postgres (Logto), `postgres:17-alpine` | 70 | `pgdata` (`PGDATA`) |
+| MongoDB, `mongo:7.0` | 999 | `db` (`storage.subPath`, monté sur `/data/db`) |
+| uptime-kuma | 0 (root) | — ; base **SQLite** imposée (`UPTIME_KUMA_DB_TYPE`), le MariaDB intégré tourne sous l'uid 1000 |
+| MinIO, frontend, landing, doc | 0 (root) | — |
+
+## Dépannage
+
+- **Une Application reste `Degraded` / `Progressing` et plus rien ne se
+  déploie.** Une vague attend que la précédente soit *Healthy* : tant qu'elle
+  ne l'est pas, la synchro de l'Application `root` reste « Running » et aucun
+  nouveau commit n'est appliqué. Corriger la cause, puis relancer la synchro :
+  ```bash
+  kubectl -n argocd patch application root --type merge \
+    -p '{"status":{"operationState":{"phase":"Terminating"}}}'
+  kubectl -n argocd annotate application root argocd.argoproj.io/refresh=hard --overwrite
+  ```
+  Un composant dont l'échec ne doit pas geler le cluster porte l'annotation
+  `devver.app/non-blocking` (aujourd'hui : `backend-service`, en attente de
+  ses secrets Logto) — voir `argocd/README.md`.
+- **`Permission denied` / `CrashLoopBackOff` d'une base de données** : voir
+  [Stockage NFS : règle du NAS](#stockage-nfs--règle-du-nas).
+- **`ImagePullBackOff` sur MinIO** : `minio/minio` n'est plus publié sur Docker
+  Hub ; les nouveaux clusters utilisent `pgsty/minio` (version figée dans
+  `argocd/values.yaml`, `images.minio`).
+- **Enregistrements `_acme-challenge` qui s'accumulent dans Cloudflare**
+  (limite de 200 enregistrements dans la zone) : cert-manager doit supprimer
+  son TXT après chaque validation. Les nouveaux clusters le font ; le cluster
+  de prod actuel en laisse un à chaque renouvellement (144 supprimés le
+  31/10/2026, cause à corriger côté prod). Nettoyage des TXT de plus de 2
+  jours (un challenge en cours n'est jamais touché) :
+  ```bash
+  export VAULT_ADDR=https://vault.devver.app
+  C=$(vault kv get -field=api_token devver-infra-deployment/shared/cloudflare)
+  Z=$(curl -s -H "Authorization: Bearer $C" "https://api.cloudflare.com/client/v4/zones?name=devver.app" | jq -r '.result[0].id')
+  LIMIT=$(date -u -d '2 days ago' +%Y-%m-%dT%H:%M:%S)
+  for p in 1 2 3 4; do
+    curl -s -H "Authorization: Bearer $C" "https://api.cloudflare.com/client/v4/zones/$Z/dns_records?type=TXT&per_page=100&page=$p" \
+    | jq -r --arg l "$LIMIT" '.result[] | select((.name|startswith("_acme-challenge.")) and .created_on < $l) | "\(.id) \(.name)"'
+  done | sort -u | while read id name; do
+    curl -s -X DELETE -H "Authorization: Bearer $C" "https://api.cloudflare.com/client/v4/zones/$Z/dns_records/$id" \
+    | jq -r --arg n "$name" '"\(if .success then "supprimé" else "ÉCHEC" end) \($n)"'
+  done
+  unset C
+  ```
 
 ## Si Vault est indisponible (scellé, VM arrêtée)
 

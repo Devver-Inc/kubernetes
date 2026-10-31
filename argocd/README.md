@@ -45,7 +45,22 @@ argocd/
 Chaque vague attend que les Applications de la précédente soient *Healthy*
 (contrôle de santé des Applications dans `argocd-cm`, posé par l'Application
 `argocd`). Un composant bloqué (ex: secret à `CHANGEME` dans Vault) bloque
-les vagues suivantes jusqu'à ce qu'il soit corrigé.
+les vagues suivantes **et toute nouvelle synchro** de l'Application racine
+jusqu'à ce qu'il soit corrigé.
+
+### Composants non bloquants
+
+Une Application annotée `devver.app/non-blocking: "true"` garde son état réel
+dans ArgoCD, mais le contrôle de santé la voit *Healthy* : son échec ne gèle
+pas le cluster. À réserver aux composants qui peuvent légitimement attendre
+une action manuelle — aujourd'hui `backend-service` (secrets Logto saisis
+après l'installation). Paramètre `nonBlocking` du helper `root.stackApp` /
+`root.appMeta` (`templates/_helpers.tpl`).
+
+### Images dont la source a changé
+
+`images.minio` : `minio/minio` n'est plus publié sur Docker Hub, les nouveaux
+clusters utilisent `pgsty/minio` (même entrypoint), version figée.
 
 ## Volontairement absent pour l'instant
 
