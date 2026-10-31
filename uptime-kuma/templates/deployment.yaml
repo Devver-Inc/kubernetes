@@ -18,6 +18,12 @@ spec:
       containers:
         - name: uptime-kuma
           image: louislam/uptime-kuma:2.5.5
+          env:
+            # SQLite (comme en prod), sans écran de choix au 1er lancement.
+            # Le MariaDB intégré tourne sous l'uid 1000, que le NAS refuse sur
+            # les partages NFS (uid associé à un compte du NAS) — constaté sur vr27-dev.
+            - name: UPTIME_KUMA_DB_TYPE
+              value: sqlite
           ports:
             - containerPort: 3001
           volumeMounts:
