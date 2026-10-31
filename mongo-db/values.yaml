@@ -14,3 +14,10 @@ namespace:
   create: true
 
 storageClass: nfs-devver-prod
+
+# Sous-dossier du volume utilisé comme /data/db. Vide = racine du volume
+# (cluster de prod actuel, données existantes). Nouveaux clusters : "db" —
+# le NAS n'autorise MongoDB (uid 999) que dans un dossier qui lui appartient,
+# la racine du volume devant rester à root.
+storage:
+  subPath: ""

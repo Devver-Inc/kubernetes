@@ -13,11 +13,12 @@ spec:
       labels:
         app: logto-postgres
     spec:
-      # Le NAS n'applique que les droits du PROPRIÉTAIRE (pas "other", même en
-      # 777) : sur un volume neuf, créé par root, l'utilisateur de l'image ne
-      # pourrait pas écrire. On lui attribue d'abord son dossier de données
-      # (root est autorisé : pas de squash). Non récursif ; sans effet sur un
-      # volume existant déjà au bon propriétaire (prod).
+      # Le NAS n'accorde à un utilisateur non-root que les dossiers dont il est
+      # PROPRIÉTAIRE (pas "other", même en 777), et la racine du volume doit
+      # rester à root (sinon même son nouveau propriétaire ne peut plus y
+      # accéder — constaté sur vr27-dev). On crée donc un SOUS-DOSSIER de
+      # données attribué à l'utilisateur de l'image (root est autorisé : pas de
+      # squash). Non récursif ; sans effet si le dossier existe déjà.
       initContainers:
         - name: volume-ownership
           image: busybox:1.36
@@ -26,7 +27,7 @@ spec:
             - -c
             - >-
               mkdir -p /var/lib/postgresql/data/pgdata &&
-              chown 70:70 /var/lib/postgresql/data /var/lib/postgresql/data/pgdata &&
+              chown 70:70 /var/lib/postgresql/data/pgdata &&
               chmod 700 /var/lib/postgresql/data/pgdata
           volumeMounts:
             - name: postgres-data
