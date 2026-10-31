@@ -16,6 +16,18 @@ spec:
       labels:
         app: mongodb
     spec:
+      # Le NAS n'applique que les droits du PROPRIÉTAIRE (pas "other", même en
+      # 777) : sur un volume neuf, créé par root, l'utilisateur de l'image ne
+      # pourrait pas écrire. On lui attribue d'abord son dossier de données
+      # (root est autorisé : pas de squash). Non récursif ; sans effet sur un
+      # volume existant déjà au bon propriétaire (prod).
+      initContainers:
+      - name: volume-ownership
+        image: busybox:1.36
+        command: ["sh", "-c", "chown 999:999 /data/db"]
+        volumeMounts:
+        - name: mongodb-storage
+          mountPath: /data/db
       containers:
       - name: mongodb
         image: mongo:7.0
