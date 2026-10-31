@@ -24,3 +24,10 @@ github:
   repo: argocd-client-deployment
   branch: main
   pathPrefix: ""
+
+# Secret backend-secret depuis Vault (nouveaux clusters ; la prod actuelle
+# applique son Secret à la main). prefix = <org>/<env>.
+vault:
+  enabled: false
+  prefix: ""
+  refreshInterval: 15m

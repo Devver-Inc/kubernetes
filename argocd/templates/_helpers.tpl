@@ -38,7 +38,13 @@ syncPolicy:
       maxDuration: 5m
 {{- end }}
 
-{{/* En-tête commun des Applications de la plateforme */}}
+{{/*
+En-tête commun des Applications de la plateforme.
+nonBlocking=true : annotation devver.app/non-blocking — l'Application garde
+son vrai état dans ArgoCD, mais n'empêche pas les vagues suivantes (contrôle
+de santé des Applications, Application "argocd"). Réservé aux composants dont
+l'échec ne doit pas geler le cluster (ex: backend en attente de configuration).
+*/}}
 {{- define "root.appMeta" -}}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -47,6 +53,9 @@ metadata:
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: {{ .wave | quote }}
+    {{- if .nonBlocking }}
+    devver.app/non-blocking: "true"
+    {{- end }}
 {{- end }}
 
 {{/*
@@ -59,7 +68,7 @@ storage=true : composant avec PVC -> storageClass du cluster et prune=false
 */}}
 {{- define "root.stackApp" -}}
 {{- $ := .ctx -}}
-{{ include "root.appMeta" (dict "name" .name "wave" .wave) }}
+{{ include "root.appMeta" (dict "name" .name "wave" .wave "nonBlocking" .nonBlocking) }}
 spec:
   project: platform
   destination:

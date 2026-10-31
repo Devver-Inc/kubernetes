@@ -27,6 +27,9 @@ spec:
             accounts.backend-api: apiKey
             # Santé des Applications (app-of-apps) : sans ça, une vague
             # n'attend pas que les Applications de la vague précédente soient Healthy.
+            # devver.app/non-blocking=true : une Application en échec (Degraded,
+            # Missing…) est vue Healthy par son parent pour ne pas bloquer les
+            # vagues suivantes ; son état réel reste visible sur elle-même.
             resource.customizations.health.argoproj.io_Application: |
               hs = {}
               hs.status = "Progressing"
@@ -36,6 +39,12 @@ spec:
                 if obj.status.health.message ~= nil then
                   hs.message = obj.status.health.message
                 end
+              end
+              if obj.metadata.annotations ~= nil
+                 and obj.metadata.annotations["devver.app/non-blocking"] == "true"
+                 and hs.status ~= "Healthy" then
+                hs.message = "non bloquant (" .. hs.status .. ") " .. hs.message
+                hs.status = "Healthy"
               end
               return hs
           rbac:
