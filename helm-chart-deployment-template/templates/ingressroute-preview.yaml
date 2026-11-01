@@ -1,0 +1,26 @@
+{{- /*
+Previews : <deploymentId>--<projectId>.<DEVVER_PREVIEW_DOMAIN> (preview.<domaine du cluster>).
+Un seul wildcard sert tous les projets du cluster (chart preview/) ; le suffixe
+--<projectId> envoie chaque hôte vers le deploy-agent du bon projet.
+*/ -}}
+{{- with .Values.container.env }}
+{{- if and $.Values.project.id .DEVVER_PREVIEW_DOMAIN }}
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ include "app-template.fullname" $ }}-preview
+  namespace: {{ include "app-template.namespace" $ }}
+  labels:
+    {{- include "app-template.labels" $ | nindent 4 }}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: HostRegexp(`^[a-z0-9-]+--{{ lower $.Values.project.id }}\.{{ lower .DEVVER_PREVIEW_DOMAIN | replace "." "\\." }}$`)
+      services:
+        - name: {{ include "app-template.fullname" $ }}
+          port: http
+  tls: {}
+{{- end }}
+{{- end }}
