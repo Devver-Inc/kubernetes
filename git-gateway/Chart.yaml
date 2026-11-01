@@ -1,0 +1,6 @@
+apiVersion: v2
+name: git-gateway
+description: Point d'entrée SSH unique des git push vers les deploy-agents (sshpiper + plugin devver)
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

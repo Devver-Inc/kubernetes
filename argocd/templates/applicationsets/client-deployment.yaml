@@ -1,8 +1,8 @@
 # Une Application par projet client du cluster :
-# argocd-client-deployment/<org>-<env>/<org client>/<projet>/values.yaml
+# argocd-client-deployment/<org>-<env>/p-<projectId>/values.yaml
 # (écrit par le backend, GITHUB_PATH_PREFIX=<org>-<env>), rendu par
 # helm-chart-deployment-template avec les secrets depuis Vault (ESO).
-# path[0] = cluster, path[1] = org client, path[2] = projet.
+# path[0] = cluster, path[1] = p-<projectId> (= namespace, stable aux renommages).
 {{- $id := include "root.clusterId" . }}
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
@@ -17,10 +17,10 @@ spec:
         repoURL: {{ .Values.git.clientDeployment.repoURL }}
         revision: {{ .Values.git.clientDeployment.revision }}
         directories:
-          - path: {{ $id }}/*/*
+          - path: {{ $id }}/p-*
   template:
     metadata:
-      name: {{ `'{{path[1]}}-{{path[2]}}'` }}
+      name: {{ `'{{path[1]}}'` }}
     spec:
       project: clients
       destination:
@@ -49,6 +49,8 @@ spec:
                 value: {{ include "root.storageClass" . | quote }}
               - name: persistence.root.storageClass
                 value: {{ include "root.storageClass" . | quote }}
+              - name: container.env.DEVVER_GIT_GATEWAY_PUBLIC_KEY
+                value: {{ .Values.gitGateway.publicKey | quote }}
         - repoURL: {{ .Values.git.clientDeployment.repoURL }}
           targetRevision: {{ .Values.git.clientDeployment.revision }}
           ref: values

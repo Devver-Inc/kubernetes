@@ -30,3 +30,6 @@ data:
   ARGOCD_BASE_URL: "https://argocd.{{ .Values.domain }}"
   GIT_AUTH_URL: "https://app.{{ .Values.domain }}/api/v1"
   VAULT_ADDR: {{ .Values.vaultAddr | quote }}
+  # Adresse interne du backend, donnée aux deploy-agents (réconciliation au démarrage).
+  BACKEND_INTERNAL_URL: "http://backend-service.devver-backend-service.svc.cluster.local:3000/api/v1"
+  GIT_SSH_HOST: "git.{{ .Values.domain }}"

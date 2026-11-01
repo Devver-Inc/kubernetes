@@ -1,0 +1,16 @@
+domain: devver.app
+dnsTarget: ""
+namespace:
+  create: false
+
+image: ghcr.io/devver-inc/git-gateway:v0.1.0
+replicas: 2
+
+# Secrets depuis Vault : kubernetes-cluster/<prefix>/git-gateway
+# { gatewaySecret, hostKey (base64), upstreamKey }. gatewaySecret = GIT_GATEWAY_SECRET du backend.
+vault:
+  prefix: ""
+  refreshInterval: 15m
+
+backendUrl: http://backend-service.devver-backend-service.svc.cluster.local:3000/api/v1
+upstreamTemplate: "deploy-agent.p-{projectId}.svc.cluster.local:22"

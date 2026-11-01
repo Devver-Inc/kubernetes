@@ -10,6 +10,7 @@ organization:
 
 project:
   name: "projt1"      # Nom du projet
+  id: ""              # écrit par le backend : namespace p-<id>, Service p-<id>-mongo
 
 # Image MongoDB
 image:

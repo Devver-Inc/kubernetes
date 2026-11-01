@@ -2,7 +2,7 @@
 Fullname : nomorga-nomprojet
 */}}
 {{- define "mongo-template.fullname" -}}
-{{- printf "%s-%s" (lower .Values.organization.name) (lower .Values.project.name) | trunc 63 | trimSuffix "-" }}
+{{- include "mongo-template.namespace" . }}
 {{- end }}
 
 {{/*
@@ -16,7 +16,11 @@ Nom du déploiement MongoDB : nomorga-nomprojet-mongo
 Namespace : nomorga-nomprojet
 */}}
 {{- define "mongo-template.namespace" -}}
+{{- if .Values.project.id -}}
+{{- printf "p-%s" .Values.project.id -}}
+{{- else -}}
 {{- printf "%s-%s" (lower .Values.organization.name) (lower .Values.project.name) | trunc 63 | trimSuffix "-" }}
+{{- end -}}
 {{- end }}
 
 {{/*
@@ -34,8 +38,8 @@ helm.sh/chart: {{ include "mongo-template.chart" . }}
 app.kubernetes.io/name: {{ include "mongo-template.mongoName" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
-organization: {{ .Values.organization.name }}
-project: {{ .Values.project.name }}
+organization: {{ .Values.organization.name | default "" | quote }}
+project: {{ .Values.project.name | quote }}
 {{- with .Values.labels }}
 {{- range $key, $value := . }}
 {{ $key }}: {{ $value | quote }}
