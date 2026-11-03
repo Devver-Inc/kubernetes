@@ -20,6 +20,10 @@ kind: IngressRouteTCP
 metadata:
   name: git-gateway
   namespace: devver-git-gateway
+  annotations:
+    # Le Traefik de RKE2 (--providers.kubernetescrd.ingressClass=traefik)
+    # ignore les IngressRoute* sans cette annotation.
+    kubernetes.io/ingress.class: traefik
 spec:
   entryPoints:
     - {{ .Values.entryPoint }}

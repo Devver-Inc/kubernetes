@@ -10,6 +10,10 @@ kind: IngressRoute
 metadata:
   name: {{ include "app-template.fullname" $ }}-preview
   namespace: {{ include "app-template.namespace" $ }}
+  annotations:
+    # Le Traefik de RKE2 (--providers.kubernetescrd.ingressClass=traefik)
+    # ignore les IngressRoute* sans cette annotation.
+    kubernetes.io/ingress.class: traefik
   labels:
     {{- include "app-template.labels" $ | nindent 4 }}
 spec:
