@@ -6,3 +6,9 @@ default: true
 nfs:
   server: 192.168.10.5
   share: /volume1/NFS_K8S_DEVVER_PROD
+
+# Mode imposé par le driver à la racine de chaque volume (vide = rien, prod
+# actuelle). Nouveaux clusters : "0777" — sinon le NAS peut créer la racine en
+# 000 et les applis non-root (Postgres 70, MongoDB 999) ne la traversent plus
+# pour atteindre LEUR sous-dossier (constaté sur devver-dev).
+mountPermissions: ""

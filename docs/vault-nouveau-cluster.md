@@ -192,6 +192,11 @@ Constaté sur le NAS (Ugreen) lors du premier déploiement complet (`vr27-dev`) 
 - l'**uid 1000** correspond à un compte du NAS : il est refusé partout, même
   dans un dossier qui lui appartient.
 
+La StorageClass des nouveaux clusters impose `mountPermissions: "0777"` à la
+racine de chaque volume : sans ça, le NAS peut la créer en `000` (constaté sur
+`devver-dev`, partage simplement renommé) et plus aucune application non-root
+ne la traverse.
+
 Règle pour toute application dont l'image ne tourne pas en root : un
 initContainer (root) crée un **sous-dossier** du volume et l'attribue à l'uid
 de l'image ; l'application écrit dans ce sous-dossier (ex. `subPath`). Ne

@@ -8,6 +8,9 @@ provisioner: nfs.csi.k8s.io
 parameters:
   server: {{ .Values.nfs.server }}
   share: {{ .Values.nfs.share }}
+  {{- with .Values.mountPermissions }}
+  mountPermissions: {{ . | quote }}
+  {{- end }}
 reclaimPolicy: Retain
 volumeBindingMode: Immediate
 allowVolumeExpansion: false

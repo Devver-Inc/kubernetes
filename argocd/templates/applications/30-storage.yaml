@@ -13,6 +13,7 @@ spec:
       valuesObject:
         storageClassName: {{ include "root.storageClass" . }}
         default: true
+        mountPermissions: "0777"
         nfs:
           server: {{ required "nfs.server est requis" .Values.nfs.server }}
           share: {{ required "nfs.share est requis" .Values.nfs.share }}
