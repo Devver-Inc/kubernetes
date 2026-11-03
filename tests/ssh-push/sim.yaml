@@ -1,0 +1,143 @@
+# TEST UNIQUEMENT (branche feat/git-gateway) — à appliquer à la main sur le
+# cluster de test, puis supprimer. Simule les deux pièces des devs pas encore
+# publiées, pour valider la chaîne réelle :
+#   git push (SSH dans TLS, SNI git.<domaine>) -> Traefik :8443 (gitssh)
+#   -> git-gateway (sshpiper, image réelle) -> deploy-agent.p-<id>:22
+#
+#   - authz-stub : doublure du backend, POST /api/v1/git-gateway/authorize
+#     -> 204 pour le projet de test uniquement, 403 sinon ;
+#   - deploy-agent (namespace p-<id>) : doublure de l'agent, sshd + git-shell,
+#     dépôt nu /app/repos/test.git, n'accepte QUE la clé du gateway
+#     (Vault git-gateway/upstreamPublicKey, via ESO).
+#
+# Déployé par ArgoCD (Application ssh-push-test, activée par tests.sshPush dans
+# argocd/values.yaml). Le git-gateway pointe vers la doublure par
+# gitGateway.backendUrl (argocd/values.yaml).
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ssh-push-test
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: authz-stub
+  namespace: ssh-push-test
+data:
+  stub.py: |
+    import json, sys
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+    PROJECT = "6650a1b2c3d4e5f6a7b8c9d0"
+    class H(BaseHTTPRequestHandler):
+        def do_POST(self):
+            body = json.loads(self.rfile.read(int(self.headers.get("content-length", 0))) or b"{}")
+            ok = self.path == "/api/v1/git-gateway/authorize" and body.get("projectId") == PROJECT \
+                 and bool(self.headers.get("x-git-gateway-secret"))
+            print(f"authorize path={self.path} project={body.get('projectId')} "
+                  f"secret={'oui' if self.headers.get('x-git-gateway-secret') else 'non'} -> {204 if ok else 403}",
+                  flush=True)
+            self.send_response(204 if ok else 403); self.end_headers()
+        def log_message(self, *a): pass
+    HTTPServer(("", 8080), H).serve_forever()
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authz-stub
+  namespace: ssh-push-test
+spec:
+  selector:
+    matchLabels: {app: authz-stub}
+  template:
+    metadata:
+      labels: {app: authz-stub}
+    spec:
+      containers:
+        - name: stub
+          image: python:3.12-alpine
+          command: ["python", "/stub/stub.py"]
+          ports: [{containerPort: 8080}]
+          volumeMounts: [{name: stub, mountPath: /stub}]
+      volumes:
+        - name: stub
+          configMap: {name: authz-stub}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: authz-stub
+  namespace: ssh-push-test
+spec:
+  selector: {app: authz-stub}
+  ports: [{port: 8080, targetPort: 8080}]
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: p-6650a1b2c3d4e5f6a7b8c9d0
+  labels:
+    # Accès au ClusterSecretStore vault-platform (lecture de git-gateway/upstreamPublicKey).
+    devver.app/secrets-tier: platform
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: agent-authorized-key
+  namespace: p-6650a1b2c3d4e5f6a7b8c9d0
+spec:
+  refreshInterval: 15m
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: vault-platform
+  target:
+    name: agent-authorized-key
+  data:
+    - secretKey: authorized_keys
+      remoteRef:
+        key: devver/dev/git-gateway
+        property: upstreamPublicKey
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deploy-agent
+  namespace: p-6650a1b2c3d4e5f6a7b8c9d0
+spec:
+  selector:
+    matchLabels: {app: deploy-agent}
+  template:
+    metadata:
+      labels: {app: deploy-agent}
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: agent
+          image: alpine:3.20
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -e
+              apk add --no-cache openssh git >/dev/null
+              echo /usr/bin/git-shell >> /etc/shells
+              adduser -D -s /usr/bin/git-shell git
+              sed -i 's/^git:!/git:*/' /etc/shadow
+              install -d -o git -g git -m 700 /home/git/.ssh
+              install -o git -g git -m 600 /keys/authorized_keys /home/git/.ssh/authorized_keys
+              mkdir -p /app/repos && git init -q --bare /app/repos/test.git && chown -R git:git /app/repos
+              ssh-keygen -A >/dev/null
+              exec /usr/sbin/sshd -D -e -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o AllowUsers=git
+          ports: [{containerPort: 22}]
+          volumeMounts: [{name: keys, mountPath: /keys, readOnly: true}]
+      volumes:
+        - name: keys
+          secret: {secretName: agent-authorized-key}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: deploy-agent
+  namespace: p-6650a1b2c3d4e5f6a7b8c9d0
+spec:
+  selector: {app: deploy-agent}
+  ports: [{name: ssh, port: 22, targetPort: 22}]

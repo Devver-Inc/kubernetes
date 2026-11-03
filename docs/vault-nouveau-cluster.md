@@ -84,6 +84,8 @@ dans `_helpers.tpl` de chaque chart, à placer dans
 | `backend` | `LOGTO_CLIENT_ID`, `LOGTO_SECRET`, `LOGTO_WEBHOOK_SIGNING_KEY` | **à saisir après l'install de Logto** (non bloquant pour la pipeline) | `backend-secret` |
 | `backend` | `VAULT_AUTH_MOUNT`, `VAULT_ROLE`, `VAULT_KV_MOUNT`, `VAULT_KV_PREFIX` (`<org>/<env>`) | fixe | `backend-secret` |
 | `argocd` | `admin_password` | **auto après installation** (copié depuis Argo) | — (connexion à l'UI) |
+| `git-gateway` | `gatewaySecret` | généré | `git-gateway` ; aussi `GIT_GATEWAY_SECRET` du `backend-secret` |
+| `git-gateway` | `hostKey` (base64), `upstreamKey`, `upstreamPublicKey` | généré (`ssh-keygen` ed25519) | `git-gateway` ; `upstreamPublicKey` → `gitGateway.publicKey` (Application racine, playbook 06) |
 
 **Secrets communs** : saisis **une seule fois** dans
 `devver-infra-deployment/shared/<chemin>` (mêmes noms de clés), copiés dans
@@ -118,6 +120,15 @@ copie dans `kubernetes-cluster/<org>/<env>/<chemin>`.
      force-sync=$(date +%s) --overwrite
    ```
    Le backend démarre seul dès que le Secret existe.
+
+## SSH des `git push` (git-gateway)
+
+Le client enveloppe SSH dans TLS (`ProxyCommand openssl s_client -servername
+%h -connect %h:443`). Chemin : reverse proxy frontal (SNI `git.<domaine>`, en
+passthrough, vers le **port 8443** du cluster) → Traefik, entrypoint `gitssh`
+(sans délai d'expiration) → `IngressRouteTCP HostSNI(git.<domaine>)` termine
+le TLS → git-gateway (sshpiper) → `deploy-agent.p-<projectId>:22`, qui
+n'accepte que la clé du gateway. Test sans frontal : `-connect <IP ingress>:8443`.
 
 ## Domaine et DNS du cluster
 

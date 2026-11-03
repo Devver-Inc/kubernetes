@@ -22,7 +22,7 @@ metadata:
   namespace: devver-git-gateway
 spec:
   entryPoints:
-    - websecure
+    - {{ .Values.entryPoint }}
   routes:
     - match: HostSNI(`git.{{ .Values.domain }}`)
       services:

@@ -1,4 +1,5 @@
 # Non bloquant : tant que ses secrets (git-gateway) ne sont pas saisis dans Vault,
 # le gateway reste en erreur sans geler les vagues suivantes.
 {{- $extra := dict "image" .Values.gitGateway.image "vault" (dict "prefix" (printf "%s/%s" .Values.cluster.org .Values.cluster.env)) }}
+{{- with .Values.gitGateway.backendUrl }}{{- $_ := set $extra "backendUrl" . }}{{- end }}
 {{ include "root.stackApp" (dict "ctx" $ "name" "git-gateway" "wave" "3" "path" "git-gateway" "namespace" "devver-git-gateway" "storage" false "nonBlocking" true "extra" $extra) }}

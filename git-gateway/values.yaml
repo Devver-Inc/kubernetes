@@ -5,6 +5,11 @@ namespace:
 
 issuer: letsencrypt-cloudflare
 
+# Entrypoint Traefik dédié au SSH (port 8443 du Service rke2-traefik, sans
+# délai d'expiration — cluster-k8s-deployment, playbook 03). Le public reste
+# sur 443 : le reverse proxy frontal envoie le SNI git.* vers ce port.
+entryPoint: gitssh
+
 image: ghcr.io/devver-inc/git-gateway:v0.1.0
 replicas: 2
 

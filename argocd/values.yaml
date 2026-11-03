@@ -25,9 +25,21 @@ vaultAddr: https://vault.devver.app
 # Clé publique (non secrète) avec laquelle le git-gateway se connecte aux
 # deploy-agents : chaque agent n'accepte qu'elle sur son port 22.
 gitGateway:
+  # Clé publique de upstreamKey (Vault git-gateway/upstreamPublicKey), passée
+  # par la pipeline (playbook 06) : chaque deploy-agent n'accepte qu'elle.
   publicKey: ""
-  image: ghcr.io/devver-inc/git-gateway:v0.1.0
+  # TEST (branche feat/git-gateway) : v0.1.0 pas encore publiée ; sha-9f77151
+  # = main du repo git-gateway. Repasser sur v0.1.0 avant la fusion sur main.
+  image: ghcr.io/devver-inc/git-gateway:sha-9f77151
+  # TEST : doublure du backend (tests/ssh-push/sim.yaml). Vide = backend réel.
+  # À vider avant la fusion sur main.
+  backendUrl: http://authz-stub.ssh-push-test.svc.cluster.local:8080/api/v1
 acmeEmail: info@devver.app
+
+# TEST (branche feat/git-gateway) : Application ssh-push-test (tests/ssh-push/).
+# Repasser à false (et supprimer tests/) avant la fusion sur main.
+tests:
+  sshPush: true
 
 # Cible external-dns (CNAME) des Ingress. Vide tant que le Traefik frontal et
 # le DNS Cloudflare ne sont pas en place (étape ultérieure).

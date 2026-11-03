@@ -1,0 +1,15 @@
+{{- if .Values.tests.sshPush }}
+# TEST (branche feat/git-gateway) : doublures du backend et d'un deploy-agent
+# pour valider un git push réel à travers le git-gateway (tests/ssh-push/).
+# Activé par tests.sshPush ; à retirer avant la fusion sur main.
+{{ include "root.appMeta" (dict "name" "ssh-push-test" "wave" "4" "nonBlocking" true) }}
+spec:
+  project: platform
+  destination:
+    server: https://kubernetes.default.svc
+  source:
+    repoURL: {{ .Values.git.kubernetes.repoURL }}
+    targetRevision: {{ .Values.git.kubernetes.revision }}
+    path: tests/ssh-push
+  {{- include "root.syncPolicy" (dict "opts" (list)) | nindent 2 }}
+{{- end }}
