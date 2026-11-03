@@ -125,10 +125,10 @@ copie dans `kubernetes-cluster/<org>/<env>/<chemin>`.
 
 Le client enveloppe SSH dans TLS (`ProxyCommand openssl s_client -servername
 %h -connect %h:443`). Chemin : reverse proxy frontal (SNI `git.<domaine>`, en
-passthrough, vers le **port 8443** du cluster) → Traefik, entrypoint `gitssh`
+passthrough, vers le **port 9443** du cluster) → Traefik, entrypoint `gitssh`
 (sans délai d'expiration) → `IngressRouteTCP HostSNI(git.<domaine>)` termine
 le TLS → git-gateway (sshpiper) → `deploy-agent.p-<projectId>:22`, qui
-n'accepte que la clé du gateway. Test sans frontal : `-connect <IP ingress>:8443`.
+n'accepte que la clé du gateway. Test sans frontal : `-connect <IP ingress>:9443`.
 
 ## Domaine et DNS du cluster
 

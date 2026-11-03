@@ -1,7 +1,7 @@
 # TEST UNIQUEMENT (branche feat/git-gateway) — à appliquer à la main sur le
 # cluster de test, puis supprimer. Simule les deux pièces des devs pas encore
 # publiées, pour valider la chaîne réelle :
-#   git push (SSH dans TLS, SNI git.<domaine>) -> Traefik :8443 (gitssh)
+#   git push (SSH dans TLS, SNI git.<domaine>) -> Traefik :9443 (gitssh)
 #   -> git-gateway (sshpiper, image réelle) -> deploy-agent.p-<id>:22
 #
 #   - authz-stub : doublure du backend, POST /api/v1/git-gateway/authorize
