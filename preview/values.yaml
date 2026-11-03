@@ -1,0 +1,8 @@
+domain: devver.app
+dnsTarget: ""
+namespace:
+  create: false
+
+# Namespace de Traefik (RKE2 : kube-system), où vit le TLSStore par défaut.
+traefikNamespace: kube-system
+issuer: letsencrypt-cloudflare

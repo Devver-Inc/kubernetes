@@ -14,15 +14,15 @@ spec:
         repoURL: {{ .Values.git.clientDeployment.repoURL }}
         revision: {{ .Values.git.clientDeployment.revision }}
         files:
-          - path: {{ $id }}/*/*/values-mongo.yaml
+          - path: {{ $id }}/p-*/values-mongo.yaml
   template:
     metadata:
-      name: {{ `'{{path[1]}}-{{path[2]}}-mongo'` }}
+      name: {{ `'{{path[1]}}-mongo'` }}
     spec:
       project: clients
       destination:
         server: https://kubernetes.default.svc
-        namespace: {{ `'{{path[1]}}-{{path[2]}}'` }}
+        namespace: {{ `'{{path[1]}}'` }}
       sources:
         - repoURL: {{ .Values.git.kubernetes.repoURL }}
           targetRevision: {{ .Values.git.kubernetes.revision }}

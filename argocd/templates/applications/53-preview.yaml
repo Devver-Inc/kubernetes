@@ -1,0 +1,2 @@
+# Certificat wildcard *.preview.<domaine> (TLSStore par défaut de Traefik) des previews deploy-agent.
+{{ include "root.stackApp" (dict "ctx" $ "name" "preview" "wave" "1" "path" "preview" "namespace" "kube-system" "storage" false) }}

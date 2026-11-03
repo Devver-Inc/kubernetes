@@ -21,6 +21,12 @@ git:
     revision: main
 
 vaultAddr: https://vault.devver.app
+
+# Clé publique (non secrète) avec laquelle le git-gateway se connecte aux
+# deploy-agents : chaque agent n'accepte qu'elle sur son port 22.
+gitGateway:
+  publicKey: ""
+  image: ghcr.io/devver-inc/git-gateway:v0.1.0
 acmeEmail: info@devver.app
 
 # Cible external-dns (CNAME) des Ingress. Vide tant que le Traefik frontal et

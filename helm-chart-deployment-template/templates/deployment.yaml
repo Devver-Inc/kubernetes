@@ -19,6 +19,8 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
+      # Le code des clients tourne dans ce pod : aucun jeton Kubernetes monté.
+      automountServiceAccountToken: false
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -37,6 +39,24 @@ spec:
         - name: http
           containerPort: {{ .Values.container.port }}
           protocol: TCP
+        {{- if .Values.project.id }}
+        - name: api
+          containerPort: 8080
+        - name: ssh
+          containerPort: 22
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: api
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: api
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          failureThreshold: 4
+        {{- end }}
         
         {{- if .Values.container.env }}
         env:

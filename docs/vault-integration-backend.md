@@ -30,8 +30,11 @@ recopie les valeurs de Vault dans des Secrets Kubernetes.
 
   - `<org>/<env>` identifie le cluster (ex : `acme/prod`). Ce n'est **pas**
     l'organisation Devver du client.
-  - `<namespace>` = `lower(<org slug client>)-lower(<project slug>)`, exactement
-    le namespace que crée le chart (ex : `johnny-kaktus`).
+  - `<namespace>` = `p-<projectId>`, exactement le namespace que crée le chart
+    quand les values portent `project.id` (deploy-agent v0.2+). Il ne change pas
+    si l'org ou le projet est renommé, et le backend comme le git-gateway en
+    déduisent l'adresse de l'agent : `deploy-agent.p-<projectId>.svc`. Sans
+    `project.id` (cluster de prod actuel) : `lower(<org>)-lower(<projet>)`.
 - **Le chart client** (`helm-chart-deployment-template`, avec
   `secrets.enabled: true`) injecte **toutes** les clés de `.../app` comme
   variables d'environnement du conteneur.
@@ -92,14 +95,17 @@ domaine, une org ou un env en dur : voir la section « Fiche du cluster » de
    - `DEVVER_SECRET` : **générer une valeur unique par projet**, 48 caractères
      alphanumériques aléatoires. On abandonne `dev-secret-123`, partagé par
      tous. À voir aussi côté deploy-agent.
-   - Toutes les variables d'environnement **sensibles** saisies par
-     l'utilisateur.
+   - `DEVVER_MONGO_CONNECTION_STRING` si le projet a un Mongo.
+   - **Pas** les variables saisies par l'utilisateur : `.../app` devient
+     l'environnement du deploy-agent lui-même, qui ne le transmet jamais aux
+     apps clientes (liste blanche). Voir « Env des déploiements » ci-dessous.
 3. **Si Mongo est demandé, écrire `.../clients/<ns>/mongo`** avec
    `{ "username": "root", "password": "<généré>" }`. Le mot de passe doit être
    **alphanumérique uniquement** : il est inséré tel quel dans la connection
    string.
 4. **Seulement ensuite**, commiter les values dans `argocd-client-deployment`,
-   **sous le dossier du cluster** : `${GITHUB_PATH_PREFIX}/<org client>/<projet>/`
+   **sous le dossier du cluster** : `${GITHUB_PATH_PREFIX}/p-<projectId>/`
+   (les ApplicationSets lisent `<org>-<env>/p-*`)
    (`GITHUB_PATH_PREFIX` = `<org>-<env>`, fourni par la ConfigMap du backend ;
    vide sur le cluster de prod actuel = racine du repo). L'ApplicationSet de
    chaque cluster ne lit que son dossier.
@@ -166,17 +172,26 @@ domaine, une org ou un env en dur : voir la section « Fiche du cluster » de
    `DELETE /v1/kubernetes-cluster/metadata/<org>/<env>/clients/<ns>/app`
    (et `/mongo`). Cela efface toutes les versions.
 
-### 6. Variables sensibles ou non : à décider côté produit
+### 6. Env des déploiements (deploy-agent v0.2)
 
-Deux options :
-- **Simple :** toutes les variables saisies par l'utilisateur vont dans Vault,
-  et `container.env` ne garde que la config Devver (widget, `NODE_ENV`).
-- **Fine :** une case « secret » par variable dans l'UI ; seules les variables
-  cochées vont dans Vault.
+Un projet tourne dans **un** pod deploy-agent, qui lance une app par branche et
+par service (« déploiement »). Chaque déploiement a son propre env (`API_URL` de
+`main` ≠ celui de `feat-x`), et le code client ne doit jamais voir les secrets de
+l'agent. Donc :
 
-L'infra supporte les deux. Si une même clé est définie dans `container.env` et
-dans Vault, la valeur de `container.env` l'emporte (règle Kubernetes
-`env` > `envFrom`). Il faut donc éviter les doublons.
+- L'env saisi par l'utilisateur va dans
+  `${VAULT_KV_PREFIX}/clients/p-<projectId>/deployments/<deploymentId>`
+  (couvert par les droits `clients/*` du rôle `backend`, rien à changer côté Vault).
+- Il n'est **pas** synchronisé par ESO : le backend le lit au déploiement et
+  l'envoie au deploy-agent dans le corps du `PUT /deployments/<deploymentId>`
+  (appel interne, port 8080, fermé par NetworkPolicy). L'agent le passe au seul
+  processus de ce déploiement et ne l'écrit jamais sur disque.
+- Le pod de l'agent ne monte aucun jeton de ServiceAccount : le code client qui y
+  tourne ne peut pas s'authentifier auprès de Vault.
+- Modifier une variable = réécrire ce chemin puis redéployer (`devver deploy`) ;
+  pas de `force-sync` ni de rollout du pod de l'agent.
+- `container.env` ne garde que la configuration non sensible de l'agent
+  (`DEVVER_PROJECT_ID`, `DEVVER_PREVIEW_DOMAIN`, `DEVVER_WIDGET_URL`...).
 
 ## Points à confirmer avec l'infra
 

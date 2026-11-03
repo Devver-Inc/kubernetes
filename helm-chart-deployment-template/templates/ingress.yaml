@@ -1,3 +1,5 @@
+{{- /* deploy-agent v0.2+ : l'API n'est plus publique, les previews passent par ingressroute-preview.yaml. */ -}}
+{{- if not .Values.project.id }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -30,3 +32,4 @@ spec:
             name: {{ include "app-template.fullname" . }}
             port:
               number: {{ .Values.ports.http }}
+{{- end }}

@@ -8,7 +8,11 @@ Expand the name of the chart.
 Create a default fully qualified app name.
 */}}
 {{- define "app-template.fullname" -}}
+{{- if .Values.project.id -}}
+deploy-agent
+{{- else -}}
 {{- printf "%s-%s" .Values.organization.name .Values.project.name | trunc 63 | trimSuffix "-" }}
+{{- end -}}
 {{- end }}
 {{/*
 Create chart name and version as used by the chart label.
@@ -46,8 +50,16 @@ app.kubernetes.io/instance: "{{ .Release.Name }}"
 {{/*
 Create the namespace name
 */}}
+{{/*
+Avec project.id (deploy-agent v0.2+) : p-<projectId>, stable si l'org ou le projet est
+renommé ; le backend et le git-gateway en déduisent deploy-agent.p-<id>.svc. Sans : historique.
+*/}}
 {{- define "app-template.namespace" -}}
+{{- if .Values.project.id -}}
+{{- printf "p-%s" .Values.project.id -}}
+{{- else -}}
 {{- printf "%s-%s" (lower .Values.organization.name) (lower .Values.project.name) | trunc 63 | trimSuffix "-" }}
+{{- end -}}
 {{- end }}
 {{/*
 Create the full hostname for the ingress

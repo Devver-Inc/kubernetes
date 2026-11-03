@@ -1,0 +1,48 @@
+# SSH n'a pas de SNI : le client l'enveloppe dans TLS (ProxyCommand openssl s_client)
+# vers git.<domaine>:443. Le reverse proxy frontal choisit le cluster par SNI (passthrough),
+# Traefik termine le TLS ici et relaie le SSH brut au gateway, qui choisit le projet
+# par l'utilisateur SSH (projectId).
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: git-gateway
+  namespace: devver-git-gateway
+spec:
+  secretName: git-gateway-tls
+  dnsNames:
+    - "git.{{ .Values.domain }}"
+  issuerRef:
+    kind: ClusterIssuer
+    name: {{ .Values.issuer }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: git-gateway
+  namespace: devver-git-gateway
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: HostSNI(`git.{{ .Values.domain }}`)
+      services:
+        - name: git-gateway
+          port: 22
+  tls:
+    secretName: git-gateway-tls
+{{- with .Values.dnsTarget }}
+---
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: git-gateway
+  namespace: devver-git-gateway
+  annotations:
+    external-dns.alpha.kubernetes.io/target: {{ . | quote }}
+spec:
+  endpoints:
+    - dnsName: "git.{{ $.Values.domain }}"
+      recordType: CNAME
+      targets:
+        - {{ . | quote }}
+{{- end }}
