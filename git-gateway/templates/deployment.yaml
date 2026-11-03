@@ -21,6 +21,10 @@ spec:
         app: git-gateway
     spec:
       serviceAccountName: git-gateway
+      # L'image sshpiperd tourne en 1000:1000 : le groupe du volume de clés
+      # (fsGroup) + mode 0440 lui permettent de lire upstreamKey.
+      securityContext:
+        fsGroup: 1000
       imagePullSecrets:
       - name: ghcr-secret
       containers:
@@ -63,7 +67,7 @@ spec:
           items:
           - key: upstreamKey
             path: upstreamKey
-          defaultMode: 0400
+          defaultMode: 0440
 ---
 # Interne : exposé en public par l'IngressRouteTCP (SSH dans TLS sur 443, voir tls.yaml).
 apiVersion: v1
