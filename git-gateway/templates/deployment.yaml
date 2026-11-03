@@ -65,14 +65,13 @@ spec:
             path: upstreamKey
           defaultMode: 0400
 ---
-# Port 22 public de git.<domaine> (redirection TCP depuis le Traefik / reverse proxy frontal).
+# Interne : exposé en public par l'IngressRouteTCP (SSH dans TLS sur 443, voir tls.yaml).
 apiVersion: v1
 kind: Service
 metadata:
   name: git-gateway
   namespace: devver-git-gateway
 spec:
-  type: LoadBalancer
   selector:
     app: git-gateway
   ports:

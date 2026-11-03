@@ -3,6 +3,8 @@ dnsTarget: ""
 namespace:
   create: false
 
+issuer: letsencrypt-cloudflare
+
 image: ghcr.io/devver-inc/git-gateway:v0.1.0
 replicas: 2
 
