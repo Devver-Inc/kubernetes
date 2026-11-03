@@ -1,4 +1,4 @@
 # Non bloquant : tant que ses secrets ne sont pas saisis (LOGTO_*), le backend
 # reste en erreur sans geler les vagues suivantes ni les synchros futures.
-{{- $extra := dict "vaultAddr" .Values.vaultAddr "github" (dict "pathPrefix" (include "root.clusterId" .) "branch" .Values.git.clientDeployment.revision) "vault" (dict "enabled" true "prefix" (printf "%s/%s" .Values.cluster.org .Values.cluster.env)) }}
+{{- $extra := dict "vaultAddr" .Values.vaultAddr "github" (dict "pathPrefix" (include "root.clusterId" .) "branch" .Values.git.clientDeployment.revision) "vault" (dict "enabled" true "prefix" (printf "%s/%s" .Values.cluster.org .Values.cluster.env)) "cluster" (dict "id" (include "root.clusterId" .) "org" .Values.cluster.org "env" .Values.cluster.env) }}
 {{ include "root.stackApp" (dict "ctx" $ "name" "backend-service" "wave" "3" "path" "backend-service" "namespace" "devver-backend-service" "storage" false "nonBlocking" true "extra" $extra) }}

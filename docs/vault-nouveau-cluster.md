@@ -82,7 +82,7 @@ dans `_helpers.tpl` de chaque chart, à placer dans
 | `backend` | `DEPLOY_AGENT_SECRET`, `GIT_TOKEN_SECRET` | généré | `backend-secret` |
 | `backend` | `ARGOCD_API_KEY` | **auto après installation** (pipeline) | `backend-secret` |
 | `backend` | `LOGTO_CLIENT_ID`, `LOGTO_SECRET`, `LOGTO_WEBHOOK_SIGNING_KEY` | **à saisir après l'install de Logto** (non bloquant pour la pipeline) | `backend-secret` |
-| `backend` | `VAULT_AUTH_MOUNT`, `VAULT_ROLE`, `VAULT_KV_PREFIX` | fixe | `backend-secret` |
+| `backend` | `VAULT_AUTH_MOUNT`, `VAULT_ROLE`, `VAULT_KV_MOUNT`, `VAULT_KV_PREFIX` (`<org>/<env>`) | fixe | `backend-secret` |
 | `argocd` | `admin_password` | **auto après installation** (copié depuis Argo) | — (connexion à l'UI) |
 
 **Secrets communs** : saisis **une seule fois** dans
@@ -118,6 +118,45 @@ copie dans `kubernetes-cluster/<org>/<env>/<chemin>`.
      force-sync=$(date +%s) --overwrite
    ```
    Le backend démarre seul dès que le Secret existe.
+
+## Domaine et DNS du cluster
+
+Le domaine est calculé par Terraform (`terraform/clusters/<org>-<env>/` du
+repo `cluster-k8s-deployment`), rien à saisir :
+
+| Org | Env | Domaine |
+|---|---|---|
+| `devver` | `prod` | `devver.app` |
+| `devver` | `staging` / `dev` | `staging.devver.app` / `dev.devver.app` |
+| autre | tous | `<org>-<env>.devver.app` |
+
+Surcharge possible par cluster (`cluster_domain`, dans la zone `devver.app`).
+Terraform crée dans Cloudflare **deux CNAME non proxifiés**, `<domaine>` et
+`*.<domaine>`, vers `reverse-proxy.vrhometech.fr`, et les supprime au destroy.
+Les certificats sont ceux de Let's Encrypt (cert-manager, DNS-01) : le proxy
+Cloudflare doit rester désactivé, son certificat ne couvrant qu'un niveau.
+
+## Fiche du cluster (source de vérité pour infra, K8s et devs)
+
+Une seule source, le dossier Terraform du cluster ; publiée sans saisie :
+
+| Où | Pour qui |
+|---|---|
+| ConfigMap `kube-public/devver-cluster-info` (chart racine, lisible par tout compte du cluster) | humains, outils dans le cluster |
+| Vault `devver-infra-deployment/clusters/<org>-<env>` (pipeline, playbook 06) | pipeline, outils infra, annuaire de tous les clusters |
+| Variables `DEVVER_*` des applications (`DEVVER_CLUSTER_ID`, `DEVVER_ORG`, `DEVVER_ENV`, `DEVVER_DOMAIN`) | code applicatif |
+
+Champs : `clusterId`, `org`, `env`, `domain`, `ingressIP`, `vaultAddr`,
+`vaultKvMount`, `vaultKvPrefix`, `vaultAuthMount`, `storageClass`,
+`gitPathPrefix`, `gitSshHost`, `kubernetesRevision`.
+
+```bash
+kubectl get cm -n kube-public devver-cluster-info -o yaml
+vault kv get devver-infra-deployment/clusters/<org>-<env>
+```
+
+**Règle pour les devs : aucun domaine, org ou env en dur** dans le code ; lire
+les variables `DEVVER_*` (ou la configuration qui en découle).
 
 ## Opérations courantes
 

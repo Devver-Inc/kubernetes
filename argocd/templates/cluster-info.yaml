@@ -1,0 +1,58 @@
+# Fiche du cluster : référence commune infra / K8s / devs (mêmes champs que
+# l'annuaire Vault devver-infra-deployment/clusters/<org>-<env>, écrit par la
+# pipeline). Calculée depuis les paramètres de l'Application racine — jamais
+# éditée à la main. Lisible par tout compte du cluster (Role ci-dessous) ;
+# un pod ne peut pas la monter (autre namespace) : les applications reçoivent
+# les mêmes valeurs en variables d'environnement DEVVER_* par leur chart.
+{{- $id := include "root.clusterId" . }}
+{{- $domain := include "root.domain" . }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: devver-cluster-info
+  namespace: kube-public
+  annotations:
+    argocd.argoproj.io/sync-wave: "-6"
+data:
+  clusterId: {{ $id | quote }}
+  org: {{ .Values.cluster.org | quote }}
+  env: {{ .Values.cluster.env | quote }}
+  domain: {{ $domain | quote }}
+  ingressIP: {{ .Values.cluster.ingressIP | quote }}
+  vaultAddr: {{ .Values.vaultAddr | quote }}
+  vaultKvMount: "kubernetes-cluster"
+  vaultKvPrefix: {{ printf "%s/%s" .Values.cluster.org .Values.cluster.env | quote }}
+  vaultAuthMount: {{ printf "k8s-%s" $id | quote }}
+  storageClass: {{ include "root.storageClass" . | quote }}
+  gitPathPrefix: {{ $id | quote }}
+  gitSshHost: {{ printf "git.%s" $domain | quote }}
+  kubernetesRevision: {{ .Values.git.kubernetes.revision | quote }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: devver-cluster-info-reader
+  namespace: kube-public
+  annotations:
+    argocd.argoproj.io/sync-wave: "-6"
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    resourceNames: ["devver-cluster-info"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: devver-cluster-info-reader
+  namespace: kube-public
+  annotations:
+    argocd.argoproj.io/sync-wave: "-6"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: devver-cluster-info-reader
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: Group
+    name: system:authenticated

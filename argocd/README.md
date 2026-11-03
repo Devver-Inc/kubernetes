@@ -30,7 +30,7 @@ argocd/
 
 | Wave | Applications |
 |---|---|
-| −6 | AppProjects `platform`, `clients` |
+| −6 | AppProjects `platform`, `clients` ; fiche du cluster `kube-public/devver-cluster-info` (+ RBAC de lecture) |
 | −5 | `argocd` (ArgoCD se gère lui-même) |
 | −4 | `external-secrets` |
 | −3 | `platform-secrets` (namespaces, stores Vault, secrets de la stack, repos Argo), `csi-driver-nfs` |

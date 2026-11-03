@@ -25,6 +25,13 @@ github:
   branch: main
   pathPrefix: ""
 
+# Identité du cluster (variables DEVVER_*), fournie par l'Application racine
+# sur les nouveaux clusters ; vide = cluster de prod actuel (rien de rendu).
+cluster:
+  id: ""
+  org: ""
+  env: ""
+
 # Secret backend-secret depuis Vault (nouveaux clusters ; la prod actuelle
 # applique son Secret à la main). prefix = <org>/<env>.
 vault:

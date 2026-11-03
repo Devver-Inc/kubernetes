@@ -48,15 +48,21 @@ recopie les valeurs de Vault dans des Secrets Kubernetes.
   | `VAULT_ADDR` | `https://vault.devver.app` |
   | `VAULT_AUTH_MOUNT` | `k8s-<org>-<env>` (mount de l'auth Kubernetes du cluster) |
   | `VAULT_ROLE` | `backend` |
-  | `VAULT_KV_PREFIX` | `kubernetes-cluster/<org>/<env>` |
+  | `VAULT_KV_MOUNT` | `kubernetes-cluster` |
+  | `VAULT_KV_PREFIX` | `<org>/<env>` |
 
   Droits : création, lecture, mise à jour et suppression sur
   `kubernetes-cluster/<org>/<env>/clients/*`, et rien d'autre. Vault vérifie
   que le jeton est bien celui du SA `backend-service` du namespace
   `devver-backend-service`.
 
-`VAULT_KV_PREFIX` évite de coder l'org et l'env du cluster en dur. Les chemins clients sont donc `${VAULT_KV_PREFIX}/clients/<ns>/...` (en
+`VAULT_KV_PREFIX` évite de coder l'org et l'env du cluster en dur. Les chemins clients sont donc `${VAULT_KV_PREFIX}/clients/<ns>/...` sous le mount `${VAULT_KV_MOUNT}` (en
 KV v2, l'API insère `data/` après le mount : `kubernetes-cluster/data/<org>/<env>/...`).
+
+Identité du cluster, également dans la ConfigMap `backend-config` : `DEVVER_CLUSTER_ID`
+(`<org>-<env>`), `DEVVER_ORG`, `DEVVER_ENV`, `DEVVER_DOMAIN`. Ne jamais écrire un
+domaine, une org ou un env en dur : voir la section « Fiche du cluster » de
+`docs/vault-nouveau-cluster.md`.
 
 ## Ce que le backend doit faire
 

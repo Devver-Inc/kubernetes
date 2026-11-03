@@ -30,3 +30,13 @@ data:
   ARGOCD_BASE_URL: "https://argocd.{{ .Values.domain }}"
   GIT_AUTH_URL: "https://app.{{ .Values.domain }}/api/v1"
   VAULT_ADDR: {{ .Values.vaultAddr | quote }}
+  {{- with .Values.cluster }}
+  {{- if .id }}
+  # Fiche du cluster (même source que kube-public/devver-cluster-info) :
+  # à lire plutôt que d'écrire un domaine, une org ou un env en dur.
+  DEVVER_CLUSTER_ID: {{ .id | quote }}
+  DEVVER_ORG: {{ .org | quote }}
+  DEVVER_ENV: {{ .env | quote }}
+  DEVVER_DOMAIN: {{ $.Values.domain | quote }}
+  {{- end }}
+  {{- end }}
