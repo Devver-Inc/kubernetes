@@ -121,14 +121,28 @@ copie dans `kubernetes-cluster/<org>/<env>/<chemin>`.
    ```
    Le backend démarre seul dès que le Secret existe.
 
-## SSH des `git push` (git-gateway)
+## Routage : frontal, cluster, git-gateway
 
-Le client enveloppe SSH dans TLS (`ProxyCommand openssl s_client -servername
-%h -connect %h:443`). Chemin : reverse proxy frontal (SNI `git.<domaine>`, en
-passthrough, vers le **port 9443** du cluster) → Traefik, entrypoint `gitssh`
-(sans délai d'expiration) → `IngressRouteTCP HostSNI(git.<domaine>)` termine
-le TLS → git-gateway (sshpiper) → `deploy-agent.p-<projectId>:22`, qui
-n'accepte que la clé du gateway. Test sans frontal : `-connect <IP ingress>:9443`.
+Tout arrive sur le **443 public** (la box ne redirige que le 443 vers le
+Traefik frontal). Le routage se fait ensuite par nom, en trois étages :
+
+| Étage | Choisit | Selon | Créé par |
+|---|---|---|---|
+| Traefik frontal (Traefik Manager) | le cluster et le port | SNI, en passthrough TLS : `<cluster>-https` (`<domaine>` + `*.<domaine>` → `<IP MetalLB>:443`), `<cluster>-git` (`git.<domaine>` → `<IP MetalLB>:9443`) | pipeline, playbook `07-frontal-routes.yml` (supprimées au destroy) |
+| Traefik du cluster | le service | `websecure` :443 → sites ; `gitssh` :9443 → git-gateway (sans délai d'expiration) ; termine le TLS (Let's Encrypt) | ArgoCD (Ingress / IngressRoute*) |
+| git-gateway (sshpiper) | le projet | utilisateur SSH = `projectId`, après `POST /api/v1/git-gateway/authorize` au backend | ArgoCD (chart `git-gateway`) |
+
+Le client enveloppe SSH dans TLS :
+`GIT_SSH_COMMAND='ssh -o ProxyCommand="openssl s_client -quiet -verify_return_error -servername %h -connect %h:443"'`,
+puis `git push ssh://<projectId>@git.<domaine>/app/repos/<repo>.git`. Le
+deploy-agent du projet (`p-<projectId>:22`) n'accepte que la clé du gateway.
+Test sans le frontal : `-connect <IP MetalLB>:9443`.
+
+Règles pour les charts :
+- toute `IngressRoute` / `IngressRouteTCP` porte l'annotation
+  `kubernetes.io/ingress.class: traefik` (le Traefik de RKE2 ignore les autres) ;
+- une image non-root qui lit un Secret monté en fichier : `fsGroup` + mode
+  lisible par le groupe (cas de sshpiperd, uid 1000).
 
 ## Domaine et DNS du cluster
 
