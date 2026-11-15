@@ -160,10 +160,13 @@ domaine, une org ou un env en dur : voir la section « Fiche du cluster » de
    déclenche :
    - l'annotation `force-sync=<timestamp>` sur l'ExternalSecret
      `<ns>-env` ;
-   - puis un rollout restart du Deployment.
+   - puis la suppression des pods du Deployment (API ArgoCD,
+     `DELETE /api/v1/applications/<app>/resource?kind=Pod&...`) : leur
+     ReplicaSet les recrée aussitôt avec le nouveau Secret.
 
-   Ces deux appels passent par l'API Kubernetes ou l'API ArgoCD (action
-   `restart`).
+   Pas de rollout restart ni d'action `restart` : l'annotation `restartedAt`
+   n'est pas dans git, selfHeal l'annule dans la seconde et le pod ne
+   redémarre jamais. Supprimer un pod n'est pas un écart avec git.
 
 ### 5. Supprimer un projet
 
