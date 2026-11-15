@@ -20,7 +20,6 @@ spec:
       containers:
       - name: backend
         image: ghcr.io/devver-inc/backend-service:{{ .Values.image.tag }}
-        command: ["node", "dist/main.js"]
         ports:
         - containerPort: 3000
           name: http
