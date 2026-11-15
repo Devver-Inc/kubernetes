@@ -21,6 +21,9 @@ spec:
         app: git-gateway
     spec:
       serviceAccountName: git-gateway
+      # The image runs as sshpiperd (1000): the mounted key must be readable by its group.
+      securityContext:
+        fsGroup: 1000
       imagePullSecrets:
       - name: ghcr-secret
       containers:
@@ -63,7 +66,7 @@ spec:
           items:
           - key: upstreamKey
             path: upstreamKey
-          defaultMode: 0400
+          defaultMode: 0440
 ---
 # Interne : exposé en public par l'IngressRouteTCP (SSH dans TLS sur 443, voir tls.yaml).
 apiVersion: v1
