@@ -42,7 +42,12 @@ data:
         fi
       done
 
-      mongosh "${CONNECT_URI}" --eval "rs.initiate({ _id: \"${REPLICA_SET}\", members: [${MEMBERS}] })"
+      # En échec (membre pas encore prêt, keyfile différent…), le Job doit
+      # échouer pour être relancé (backoffLimit) au lieu de passer pour réussi.
+      if ! mongosh "${CONNECT_URI}" --eval "rs.initiate({ _id: \"${REPLICA_SET}\", members: [${MEMBERS}] })"; then
+        echo "Échec de l'initialisation du ReplicaSet." >&2
+        exit 1
+      fi
       echo "ReplicaSet initialisé."
     else
       echo "ReplicaSet déjà initialisé, rien à faire."

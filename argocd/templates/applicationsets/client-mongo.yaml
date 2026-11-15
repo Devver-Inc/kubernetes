@@ -42,10 +42,15 @@ spec:
         - repoURL: {{ .Values.git.clientDeployment.repoURL }}
           targetRevision: {{ .Values.git.clientDeployment.revision }}
           ref: values
+      # Le keyfile est tiré au hasard à chaque rendu (lookup ne voit pas le
+      # cluster sous Argo) : on garde celui du cluster (RespectIgnoreDifferences),
+      # sinon les membres du ReplicaSet n'ont plus la même clé.
       ignoreDifferences:
         - kind: Secret
-          jqPathExpressions:
-            - .metadata.name | endswith("-mongo-keyfile")
+          name: {{ `'{{path[1]}}-mongo-keyfile'` }}
+          jsonPointers:
+            - /data
+            - /stringData
       syncPolicy:
         automated:
           prune: true
@@ -53,3 +58,4 @@ spec:
         syncOptions:
           - CreateNamespace=true
           - PrunePropagationPolicy=foreground
+          - RespectIgnoreDifferences=true
