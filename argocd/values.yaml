@@ -28,9 +28,8 @@ gitGateway:
   # Clé publique de upstreamKey (Vault git-gateway/upstreamPublicKey), passée
   # par la pipeline (playbook 06) : chaque deploy-agent n'accepte qu'elle.
   publicKey: ""
-  # sha-9f77151 = main du repo git-gateway (validé sur devver-dev, 11/2026).
-  # Passer sur v0.1.0 dès que l'image est publiée.
-  image: ghcr.io/devver-inc/git-gateway:sha-9f77151
+  # Version figée : une nouvelle version du git-gateway passe par une PR.
+  image: ghcr.io/devver-inc/git-gateway:v0.1.0
   # Vide = le backend du cluster (défaut du chart git-gateway).
   backendUrl: ""
 acmeEmail: info@devver.app
