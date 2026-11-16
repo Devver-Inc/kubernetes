@@ -47,7 +47,7 @@ secrets:
 
 # Configuration du conteneur (OS Linux complet ou application)
 container:
-  image: "ghcr.io/devver-inc/deploy-agent:v2.0.0"  # Image du conteneur (OS Linux ou application)
+  image: "ghcr.io/devver-inc/deploy-agent:2.0.0"  # Image du conteneur (OS Linux ou application)
   port: 80  # Port exposé par le conteneur
   type: "app"
   command: []
