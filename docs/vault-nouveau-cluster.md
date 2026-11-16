@@ -186,9 +186,10 @@ les variables `DEVVER_*` (ou la configuration qui en découle).
 ## Opérations courantes
 
 - **Changer un secret (rotation).** Créer une nouvelle version dans la console,
-  forcer la synchro (`force-sync`, voir plus haut), puis faire un `rollout
-  restart` du Deployment concerné. Les pods ne relisent pas leurs variables
-  d'environnement à chaud.
+  forcer la synchro (`force-sync`, voir plus haut), puis supprimer les pods
+  concernés (`kubectl delete pod -l ...`). Les pods ne relisent pas leurs
+  variables d'environnement à chaud. Pas de `rollout restart` : selfHeal annule
+  aussitôt l'annotation `restartedAt`, absente de git.
   - Mots de passe MinIO et Postgres : il faut **aussi** changer le mot de passe
     dans le service lui-même. Le Secret ne sert qu'à l'initialisation.
   - `ENCRYPTION_KEY` : ne pas la changer.

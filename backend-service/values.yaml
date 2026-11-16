@@ -13,8 +13,9 @@ dnsTarget: reverse-proxy.vrhometech.fr
 namespace:
   create: true
 
+# Version figée : une nouvelle version du backend passe par une PR (comme le deploy-agent).
 image:
-  tag: latest
+  tag: v2.0.0
 
 vaultAddr: https://vault.devver.app
 
