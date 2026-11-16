@@ -29,7 +29,7 @@ gitGateway:
   # par la pipeline (playbook 06) : chaque deploy-agent n'accepte qu'elle.
   publicKey: ""
   # Version figée : une nouvelle version du git-gateway passe par une PR.
-  image: ghcr.io/devver-inc/git-gateway:v0.1.0
+  image: ghcr.io/devver-inc/git-gateway:0.1.0
   # Vide = le backend du cluster (défaut du chart git-gateway).
   backendUrl: ""
 acmeEmail: info@devver.app

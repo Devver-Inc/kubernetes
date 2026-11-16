@@ -15,7 +15,7 @@ namespace:
 
 # Version figée : une nouvelle version du backend passe par une PR (comme le deploy-agent).
 image:
-  tag: v2.0.0
+  tag: 2.0.0
 
 vaultAddr: https://vault.devver.app
 
