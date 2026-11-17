@@ -1,0 +1,92 @@
+# MySQL 8 du serveur (état des tunnels : id, hash du token, CSR, certificat).
+# NFS du cluster (seule StorageClass) : règle NAS — l'utilisateur mysql (999)
+# n'écrit que dans un sous-dossier qui lui appartient (initContainer).
+# Le serveur exige TLS vers une base non locale : MySQL 8 génère ses propres
+# certificats au premier démarrage, le client se connecte en ssl-mode=REQUIRED.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: opentunnel-mysql
+  namespace: devver-opentunnel
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.mysql.storage }}
+  storageClassName: {{ required "storageClass est requis" .Values.storageClass }}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: opentunnel-mysql
+  namespace: devver-opentunnel
+spec:
+  serviceName: opentunnel-mysql
+  replicas: 1
+  selector:
+    matchLabels:
+      app: opentunnel-mysql
+  template:
+    metadata:
+      labels:
+        app: opentunnel-mysql
+    spec:
+      initContainers:
+      - name: volume-ownership
+        image: busybox:1.36
+        command: ["sh", "-c", "mkdir -p /volume/mysql && chown 999:999 /volume/mysql"]
+        volumeMounts:
+        - name: data
+          mountPath: /volume
+      containers:
+      - name: mysql
+        image: {{ .Values.mysql.image }}
+        ports:
+        - name: mysql
+          containerPort: 3306
+        env:
+        - name: MYSQL_DATABASE
+          value: opentunnel
+        - name: MYSQL_USER
+          value: opentunnel
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef: { name: opentunnel, key: mysql_password }
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef: { name: opentunnel, key: mysql_root_password }
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/mysql
+          subPath: mysql
+        readinessProbe:
+          exec:
+            command: ["sh", "-c", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$MYSQL_ROOT_PASSWORD\" --silent"]
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "50m"
+          limits:
+            memory: "768Mi"
+            cpu: "1"
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: opentunnel-mysql
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: opentunnel-mysql
+  namespace: devver-opentunnel
+spec:
+  clusterIP: None
+  selector:
+    app: opentunnel-mysql
+  ports:
+  - name: mysql
+    port: 3306
+    targetPort: mysql

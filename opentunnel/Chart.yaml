@@ -1,0 +1,6 @@
+apiVersion: v2
+name: opentunnel
+description: Serveur OpenTunnel (fork Devver-Inc/opentunnel) — publication d'un déploiement local sur <route>.<id>.share.<domaine>
+type: application
+version: 0.1.0
+appVersion: "0.6.2"

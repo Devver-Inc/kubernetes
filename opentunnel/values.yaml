@@ -1,0 +1,51 @@
+domain: devver.app
+dnsTarget: ""
+namespace:
+  create: false
+storageClass: ""
+
+issuer: letsencrypt-cloudflare
+
+# Sous-domaine du service : API sur share.<domain>, tunnels sur
+# <id>.share.<domain> et <route>.<id>.share.<domain>. Le DNS (*.<domain>) et la
+# route du frontal (HostSNIRegexp ^.+\.<domain>$, passthrough) couvrent déjà ces
+# noms : rien à ajouter côté DNS ni frontal.
+subdomain: share
+
+# Entrypoint Traefik des tunnels et de l'API.
+entryPoint: websecure
+
+image: ghcr.io/devver-inc/opentunnel-server:edge
+
+# Secrets depuis Vault : kubernetes-cluster/<prefix>/opentunnel
+# { acme_account_key_jwk, mysql_password, mysql_root_password, cloudflare_zone_id }
+# et le token Cloudflare (DNS:Edit) lu dans <prefix>/<cloudflare.path>.<cloudflare.property>.
+vault:
+  prefix: ""
+  refreshInterval: 15m
+cloudflare:
+  path: cloudflare
+  property: api_token
+
+acme:
+  # Staging tant que la chaîne n'est pas validée (quota Let's Encrypt partagé
+  # par tout devver.app : 50 nouveaux certificats / semaine).
+  url: https://acme-staging-v02.api.letsencrypt.org/directory
+  email: info@devver.app
+
+# Derrière le frontal et Traefik, toutes les créations viennent de la même
+# adresse : la limite par IP d'OpenTunnel devient globale. La vraie limite est
+# l'authentification (ForwardAuth) et, plus tard, une limite par utilisateur.
+createRatePerHour: 1000
+createRateBurst: 100
+
+# Création de tunnel (POST /api/tunnel) depuis l'extérieur :
+#   closed      : refusée (403) — tests infra, création par port-forward
+#   forwardAuth : autorisée si forwardAuth.address répond 200 (JWT Logto)
+publicCreate: closed
+forwardAuth:
+  address: http://backend-service.devver-backend-service.svc.cluster.local:3000/api/v1/tunnels/authorize
+
+mysql:
+  image: mysql:8.4
+  storage: 2Gi

@@ -1,0 +1,115 @@
+{{- $api := printf "%s.%s" .Values.subdomain .Values.domain }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opentunnel
+  namespace: devver-opentunnel
+spec:
+  # Mono-instance (INTERNAL_LISTEN=off, pas de mesh) : jamais deux pods à la fois.
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: opentunnel
+  template:
+    metadata:
+      labels:
+        app: opentunnel
+    spec:
+      automountServiceAccountToken: false
+      imagePullSecrets:
+      - name: ghcr-secret
+      containers:
+      - name: opentunnel
+        image: {{ .Values.image }}
+        ports:
+        - name: tls
+          containerPort: 8443
+        - name: http
+          containerPort: 8080
+        env:
+        - name: OPENTUNNEL_DOMAIN
+          value: {{ $api | quote }}
+        # API (et bridge WebSocket) en HTTP clair : Traefik termine le TLS.
+        - name: HTTP_MODE
+          value: serve
+        # Certificat du domaine de l'API (cert-manager) : évite une émission ACME
+        # pour share.<domaine>. Lu au démarrage seulement.
+        - name: TLS_CERT_FILE
+          value: /etc/opentunnel/tls/tls.crt
+        - name: TLS_KEY_FILE
+          value: /etc/opentunnel/tls/tls.key
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef: { name: opentunnel, key: mysql_password }
+        - name: DATABASE_URL
+          value: "mysql://opentunnel:$(MYSQL_PASSWORD)@opentunnel-mysql:3306/opentunnel?ssl-mode=REQUIRED"
+        - name: ACME_URL
+          value: {{ .Values.acme.url | quote }}
+        - name: ACME_EMAIL
+          value: {{ .Values.acme.email | quote }}
+        - name: ACME_ACCOUNT_KEY_JWK
+          valueFrom:
+            secretKeyRef: { name: opentunnel, key: acme_account_key_jwk }
+        - name: DNS_PROVIDER
+          value: cloudflare
+        - name: CLOUDFLARE_ZONE_ID
+          valueFrom:
+            secretKeyRef: { name: opentunnel, key: cloudflare_zone_id }
+        - name: CLOUDFLARE_API_TOKEN
+          valueFrom:
+            secretKeyRef: { name: opentunnel, key: cloudflare_api_token }
+        # Pas de Cloudflare devant (proxied=false) : aucun CF-Connecting-IP à croire.
+        - name: TRUSTED_PROXY_RANGES
+          value: "off"
+        - name: CREATE_RATE_PER_HOUR
+          value: {{ .Values.createRatePerHour | quote }}
+        - name: CREATE_RATE_BURST
+          value: {{ .Values.createRateBurst | quote }}
+        - name: INTERNAL_LISTEN
+          value: "off"
+        - name: LOG_FORMAT
+          value: json
+        volumeMounts:
+        - name: api-tls
+          mountPath: /etc/opentunnel/tls
+          readOnly: true
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "512Mi"
+            cpu: "1"
+      volumes:
+      - name: api-tls
+        secret:
+          secretName: opentunnel-api-tls
+---
+# Interne : exposé par Traefik (tls.yaml).
+apiVersion: v1
+kind: Service
+metadata:
+  name: opentunnel
+  namespace: devver-opentunnel
+spec:
+  selector:
+    app: opentunnel
+  ports:
+  - name: tls
+    port: 8443
+    targetPort: tls
+  - name: http
+    port: 8080
+    targetPort: http
