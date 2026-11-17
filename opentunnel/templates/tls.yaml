@@ -38,8 +38,25 @@ spec:
       services:
         - name: opentunnel
           port: 8443
+          {{- if .Values.proxyProtocol }}
+          serversTransport: opentunnel-proxy-protocol
+          {{- end }}
   tls:
     passthrough: true
+{{- if .Values.proxyProtocol }}
+---
+# En-tête PROXY v2 vers le serveur (PROXY_PROTOCOL=true, deployment.yaml).
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransportTCP
+metadata:
+  name: opentunnel-proxy-protocol
+  namespace: devver-opentunnel
+  annotations:
+    kubernetes.io/ingress.class: traefik
+spec:
+  proxyProtocol:
+    version: 2
+{{- end }}
 ---
 # Refus inconditionnel (403) : aucune adresse n'est dans la liste.
 apiVersion: traefik.io/v1alpha1

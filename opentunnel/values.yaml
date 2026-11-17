@@ -15,6 +15,13 @@ subdomain: share
 # Entrypoint Traefik des tunnels et de l'API.
 entryPoint: websecure
 
+# Traefik du cluster -> serveur (:8443) en PROXY protocol v2 : le serveur
+# transmet au poste du développeur l'adresse que Traefik a vue au lieu de celle
+# du pod Traefik. Ce n'est l'IP réelle du visiteur que si le frontal envoie
+# lui aussi le PROXY protocol et que l'entrypoint du cluster le lit
+# (proxyProtocol.trustedIPs) ; sinon, c'est l'adresse du frontal ou d'un nœud.
+proxyProtocol: false
+
 image: ghcr.io/devver-inc/opentunnel-server:edge
 
 # Secrets depuis Vault : kubernetes-cluster/<prefix>/opentunnel

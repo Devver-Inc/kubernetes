@@ -63,6 +63,9 @@ spec:
         # Pas de Cloudflare devant (proxied=false) : aucun CF-Connecting-IP à croire.
         - name: TRUSTED_PROXY_RANGES
           value: "off"
+        # :8443 n'accepte alors que des connexions avec en-tête PROXY (Traefik).
+        - name: PROXY_PROTOCOL
+          value: {{ .Values.proxyProtocol | quote }}
         - name: CREATE_RATE_PER_HOUR
           value: {{ .Values.createRatePerHour | quote }}
         - name: CREATE_RATE_BURST
