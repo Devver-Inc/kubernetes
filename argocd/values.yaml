@@ -33,10 +33,14 @@ gitGateway:
   # Vide = le backend du cluster (défaut du chart git-gateway).
   backendUrl: ""
 # Publication d'un déploiement local sur <route>.<id>.share.<domaine>
-# (chart opentunnel). Désactivé par défaut : à activer par cluster.
+# (chart opentunnel). Déployé sur les clusters dont cluster.env est dans envs.
 opentunnel:
-  enabled: false
+  envs: [dev]
   image: ghcr.io/devver-inc/opentunnel-server:edge
+  # Création de tunnel depuis l'extérieur (POST /api/tunnel) : forwardAuth =
+  # autorisée si le backend répond 2xx sur /api/v1/tunnels/authorize (JWT
+  # Logto). Tant que la route n'existe pas, le backend répond 404 : refusée.
+  publicCreate: forwardAuth
 acmeEmail: info@devver.app
 
 # Cible external-dns (CNAME) des Ingress. Vide tant que le Traefik frontal et
