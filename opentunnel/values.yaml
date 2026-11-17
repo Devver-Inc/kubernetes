@@ -16,11 +16,10 @@ subdomain: share
 entryPoint: websecure
 
 # Traefik du cluster -> serveur (:8443) en PROXY protocol v2 : le serveur
-# transmet au poste du développeur l'adresse que Traefik a vue au lieu de celle
-# du pod Traefik. Ce n'est l'IP réelle du visiteur que si le frontal envoie
-# lui aussi le PROXY protocol et que l'entrypoint du cluster le lit
-# (proxyProtocol.trustedIPs) ; sinon, c'est l'adresse du frontal ou d'un nœud.
-proxyProtocol: false
+# transmet au poste du développeur l'adresse du visiteur vue par Traefik (IP
+# réelle : le frontal envoie le PROXY protocol, websecure le lit — playbooks
+# 03 et 07 de cluster-k8s-deployment).
+proxyProtocol: true
 
 image: ghcr.io/devver-inc/opentunnel-server:edge
 

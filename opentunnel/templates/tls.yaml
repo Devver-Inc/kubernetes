@@ -112,8 +112,10 @@ spec:
       services:
         - name: opentunnel
           port: 8080
-    # Le reste : GET/DELETE d'un tunnel (token rly_), bridge /api/tunnel/:id/connect, site.
-    - match: {{ printf "Host(`%s`)" $api | quote }}
+    # Le reste de l'API : GET/DELETE d'un tunnel (token rly_), bridge
+    # /api/tunnel/:id/connect. Le site vitrine d'OpenTunnel n'est pas exposé :
+    # toute autre URL de share.<domaine> répond 404 (aucune route Traefik).
+    - match: {{ printf "Host(`%s`) && PathPrefix(`/api/`)" $api | quote }}
       priority: 10
       services:
         - name: opentunnel
