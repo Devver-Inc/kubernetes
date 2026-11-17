@@ -34,9 +34,12 @@ cloudflare:
   property: api_token
 
 acme:
-  # Staging tant que la chaîne n'est pas validée (quota Let's Encrypt partagé
-  # par tout devver.app : 50 nouveaux certificats / semaine).
-  url: https://acme-staging-v02.api.letsencrypt.org/directory
+  # Production : .app est en HSTS préchargé, les navigateurs refusent tout
+  # certificat non reconnu (staging compris) sans exception possible.
+  # Quota Let's Encrypt partagé par tout devver.app : 50 nouveaux certificats
+  # par semaine (un par tunnel créé). Staging pour des tests sans navigateur :
+  # https://acme-staging-v02.api.letsencrypt.org/directory
+  url: https://acme-v02.api.letsencrypt.org/directory
   email: info@devver.app
 
 # Derrière le frontal et Traefik, toutes les créations viennent de la même
