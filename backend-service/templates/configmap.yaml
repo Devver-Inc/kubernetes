@@ -1,7 +1,7 @@
 # Configuration NON sensible du backend. Les secrets (LOGTO_SECRET,
-# ENCRYPTION_KEY, STORAGE_*_KEY, GITHUB_TOKEN, ARGOCD_API_KEY, VAULT_*...)
-# sont dans le Secret backend-secret, synchronisé depuis Vault
-# (kubernetes-cluster/<org>/<env>/backend) par le chart platform-secrets.
+# STORAGE_*_KEY, GITHUB_TOKEN, ARGOCD_API_KEY, VAULT_*...) sont dans le
+# Secret backend-secret, synchronisé depuis Vault
+# (kubernetes-cluster/<org>/<env>/backend) par l'ExternalSecret de ce chart.
 # LOGTO_CLIENT_ID est aussi dans Vault : il n'existe qu'après l'install de Logto.
 apiVersion: v1
 kind: ConfigMap
