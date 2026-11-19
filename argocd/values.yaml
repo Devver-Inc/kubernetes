@@ -36,7 +36,9 @@ gitGateway:
 # (chart opentunnel). Déployé sur les clusters dont cluster.env est dans envs.
 opentunnel:
   envs: [dev]
-  image: ghcr.io/devver-inc/opentunnel-server:edge
+  # TEST (branche victor/opentunnel) : image du build de test, :edge n'est
+  # publié qu'une fois opentunnel#2 sur master. À remettre à :edge avant main.
+  image: ghcr.io/devver-inc/opentunnel-server:sha-55bd432
   # Création de tunnel depuis l'extérieur (POST /api/tunnel) : forwardAuth =
   # autorisée si le backend répond 2xx sur /api/v1/tunnels/authorize (JWT
   # Logto). Tant que la route n'existe pas, le backend répond 404 : refusée.
