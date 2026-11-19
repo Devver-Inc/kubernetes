@@ -67,9 +67,7 @@ jobs:
           check "/api/admin/stats"                       403 "${API}/api/admin/stats"
           check "POST /api/tunnel sans token"            401 -X POST "${API}/api/tunnel" -H 'content-type: application/json' -d '{}'
           check "POST /api/tunnel token invalide"        401 -X POST "${API}/api/tunnel" -H 'authorization: Bearer faux' -H 'content-type: application/json' -d '{}'
-          check "GET  /api/tunnel/<id> sans token rly_"  401 "${API}/api/tunnel/aaaaaaaaaaaa"
-          check "DELETE /api/tunnel/<id> sans token"     401 -X DELETE "${API}/api/tunnel/aaaaaaaaaaaa"
-          check "bridge /connect sans WebSocket"         426 "${API}/api/tunnel/aaaaaaaaaaaa/connect"
+          check "GET /api/tunnel/<id inconnu>"           404 "${API}/api/tunnel/aaaaaaaaaaaa"
           exit ${fail}
 
       - name: Test 3 — contrat ForwardAuth (création et suppression par l'API)
@@ -82,9 +80,19 @@ jobs:
           id=$(jq -r '.tunnel.id' <<<"${body}"); token=$(jq -r '.token' <<<"${body}")
           echo "::add-mask::${token}"
           echo "✅ token accepté par le faux authorize : tunnel ${id} créé (201, sans certificat)"
+          # Sur un tunnel existant (un id inconnu répond 404 avant tout contrôle).
+          fail=0
+          check() { got=$(curl -s -o /dev/null -m 10 -w '%{http_code}' "${@:3}"); \
+            if [[ "${got}" == "$2" ]]; then echo "✅ $1 -> ${got}"; else echo "❌ $1 -> ${got} (attendu $2)"; fail=1; fi; }
+          check "GET    /api/tunnel/${id} sans token rly_" 401 "${API}/api/tunnel/${id}"
+          check "DELETE /api/tunnel/${id} sans token rly_" 401 -X DELETE "${API}/api/tunnel/${id}"
+          check "GET    /api/tunnel/${id} token Logto (pas rly_)" 401 "${API}/api/tunnel/${id}" -H "authorization: Bearer ${OT_TEST_TOKEN}"
+          check "bridge /connect sans WebSocket"          426 "${API}/api/tunnel/${id}/connect"
+          check "GET    /api/tunnel/${id} avec token rly_" 200 "${API}/api/tunnel/${id}" -H "authorization: Bearer ${token}"
           code=$(curl -s -o /dev/null -m 10 -w '%{http_code}' -X DELETE "${API}/api/tunnel/${id}" -H "authorization: Bearer ${token}")
           [[ "${code}" == 204 ]] || { echo "::error::suppression -> ${code}"; exit 1; }
           echo "✅ tunnel ${id} supprimé avec son token rly_ (204)"
+          exit ${fail}
 
       - name: Préparer le client OpenTunnel et le proxy D1
         run: |
