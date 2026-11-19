@@ -26,7 +26,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
-      - name: {{ .Values.project.name }}
+      - name: {{ if .Values.project.id }}deploy-agent{{ else }}{{ .Values.project.name }}{{ end }}
         image: {{ .Values.container.image }}
         imagePullPolicy: Always
         {{- if .Values.container.command }}
