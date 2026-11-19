@@ -31,8 +31,14 @@ helm.sh/chart: "{{ include "app-template.chart" . }}"
 app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
 {{- end }}
 app.kubernetes.io/managed-by: "{{ .Release.Service }}"
+{{- if .Values.project.id }}
+{{- /* Les noms sont saisis par l'utilisateur (espaces, apostrophes) : pas des labels valides. */}}
+organization: "{{ .Values.organization.id }}"
+project: "{{ .Values.project.id }}"
+{{- else }}
 organization: "{{ .Values.organization.name }}"
 project: "{{ .Values.project.name }}"
+{{- end }}
 {{- with .Values.labels }}
 {{- range $key, $value := . }}
 {{ $key }}: "{{ $value }}"
