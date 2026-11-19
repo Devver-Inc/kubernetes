@@ -1,0 +1,124 @@
+{{- $api := printf "%s.%s" .Values.subdomain .Values.domain }}
+{{- $apiRe := $api | replace "." "\\." }}
+# Routage public (le frontal envoie déjà *.<domaine> en passthrough vers le
+# cluster) :
+#   <id>.share.<domaine>, <route>.<id>.share.<domaine>
+#       -> IngressRouteTCP passthrough -> serveur :8443. Le TLS est terminé sur
+#          le poste du développeur (clé et certificat du tunnel), pas ici.
+#   share.<domaine> (API, bridge WebSocket)
+#       -> IngressRoute, TLS cert-manager -> serveur :8080 (HTTP_MODE=serve)
+# Le Traefik de RKE2 (--providers.kubernetescrd.ingressClass=traefik) ignore les
+# IngressRoute* sans l'annotation kubernetes.io/ingress.class.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: opentunnel-api
+  namespace: devver-opentunnel
+spec:
+  secretName: opentunnel-api-tls
+  dnsNames:
+    - {{ $api | quote }}
+  issuerRef:
+    kind: ClusterIssuer
+    name: {{ .Values.issuer }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: opentunnel-tunnels
+  namespace: devver-opentunnel
+  annotations:
+    kubernetes.io/ingress.class: traefik
+spec:
+  entryPoints:
+    - {{ .Values.entryPoint }}
+  routes:
+    # id : 12 caractères [a-z2-7] ; une route au plus (un seul niveau).
+    - match: {{ printf "HostSNIRegexp(`^([a-z0-9-]+\\.)?[a-z2-7]{12}\\.%s$`)" $apiRe | quote }}
+      services:
+        - name: opentunnel
+          port: 8443
+          {{- if .Values.proxyProtocol }}
+          serversTransport: opentunnel-proxy-protocol
+          {{- end }}
+  tls:
+    passthrough: true
+{{- if .Values.proxyProtocol }}
+---
+# En-tête PROXY v2 vers le serveur (PROXY_PROTOCOL=true, deployment.yaml).
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransportTCP
+metadata:
+  name: opentunnel-proxy-protocol
+  namespace: devver-opentunnel
+  annotations:
+    kubernetes.io/ingress.class: traefik
+spec:
+  proxyProtocol:
+    version: 2
+{{- end }}
+---
+# Refus inconditionnel (403) : aucune adresse n'est dans la liste.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: opentunnel-deny
+  namespace: devver-opentunnel
+spec:
+  ipAllowList:
+    sourceRange:
+      - 127.0.0.1/32
+{{- if eq .Values.publicCreate "forwardAuth" }}
+---
+# Création de tunnel réservée aux utilisateurs Logto : Traefik appelle d'abord
+# le backend (GET, en-tête Authorization d'origine) ; 200 = autorisé, sinon refus.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: opentunnel-auth
+  namespace: devver-opentunnel
+spec:
+  forwardAuth:
+    address: {{ .Values.forwardAuth.address | quote }}
+    authRequestHeaders:
+      - Authorization
+    authResponseHeaders:
+      - X-Devver-User
+{{- end }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: opentunnel-api
+  namespace: devver-opentunnel
+  annotations:
+    kubernetes.io/ingress.class: traefik
+spec:
+  entryPoints:
+    - {{ .Values.entryPoint }}
+  routes:
+    - match: {{ printf "Host(`%s`) && Method(`POST`) && Path(`/api/tunnel`)" $api | quote }}
+      priority: 100
+      middlewares:
+        - name: {{ if eq .Values.publicCreate "forwardAuth" }}opentunnel-auth{{ else }}opentunnel-deny{{ end }}
+      services:
+        - name: opentunnel
+          port: 8080
+    # Pas d'ADMIN_TOKEN (admin désactivé), et la route n'est pas exposée.
+    - match: {{ printf "Host(`%s`) && PathPrefix(`/api/admin`)" $api | quote }}
+      priority: 90
+      middlewares:
+        - name: opentunnel-deny
+      services:
+        - name: opentunnel
+          port: 8080
+    # Le reste de l'API : GET/DELETE d'un tunnel (token rly_), bridge
+    # /api/tunnel/:id/connect. Le site vitrine d'OpenTunnel n'est pas exposé :
+    # toute autre URL de share.<domaine> répond 404 (aucune route Traefik).
+    - match: {{ printf "Host(`%s`) && PathPrefix(`/api/`)" $api | quote }}
+      priority: 10
+      services:
+        - name: opentunnel
+          port: 8080
+  tls:
+    secretName: opentunnel-api-tls
