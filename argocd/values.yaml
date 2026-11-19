@@ -36,16 +36,13 @@ gitGateway:
 # (chart opentunnel). Déployé sur les clusters dont cluster.env est dans envs.
 opentunnel:
   envs: [dev]
-  # TEST (branche victor/opentunnel) : image du build de test, :edge n'est
-  # publié qu'une fois opentunnel#2 sur master. À remettre à :edge avant main.
+  # :edge est publié par le fork une fois opentunnel#2 sur master ; d'ici là,
+  # le build de la PR (même code).
   image: ghcr.io/devver-inc/opentunnel-server:sha-55bd432
   # Création de tunnel depuis l'extérieur (POST /api/tunnel) : forwardAuth =
   # autorisée si le backend répond 2xx sur /api/v1/tunnels/authorize (JWT
   # Logto). Tant que la route n'existe pas, le backend répond 404 : refusée.
   publicCreate: forwardAuth
-  # TEST (branche victor/opentunnel) : faux authorize à la place du backend.
-  # À remettre à false avant la PR vers main.
-  testStub: true
 acmeEmail: info@devver.app
 
 # Cible external-dns (CNAME) des Ingress. Vide tant que le Traefik frontal et

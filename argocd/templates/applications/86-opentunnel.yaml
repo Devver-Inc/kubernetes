@@ -1,6 +1,6 @@
 {{- if has .Values.cluster.env .Values.opentunnel.envs }}
 # Non bloquant : tant que ses secrets (opentunnel) ne sont pas saisis dans Vault,
 # le serveur reste en erreur sans geler les vagues suivantes.
-{{- $extra := dict "image" .Values.opentunnel.image "publicCreate" .Values.opentunnel.publicCreate "forwardAuth" (dict "testStub" (.Values.opentunnel.testStub | default false)) "vault" (dict "prefix" (printf "%s/%s" .Values.cluster.org .Values.cluster.env)) }}
+{{- $extra := dict "image" .Values.opentunnel.image "publicCreate" .Values.opentunnel.publicCreate "vault" (dict "prefix" (printf "%s/%s" .Values.cluster.org .Values.cluster.env)) }}
 {{ include "root.stackApp" (dict "ctx" $ "name" "opentunnel" "wave" "3" "path" "opentunnel" "namespace" "devver-opentunnel" "storage" true "nonBlocking" true "extra" $extra) }}
 {{- end }}
