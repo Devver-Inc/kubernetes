@@ -1,0 +1,171 @@
+# Tests de l'infra OpenTunnel sur devver-dev (share.dev.devver.app), une étape
+# par test. Lancés à chaque push sur la branche de test (après le déploiement
+# par Argo) ou à la main (Actions > Test OpenTunnel > Run workflow, une fois le
+# fichier sur main ; sur la branche : « Re-run jobs » d'un run existant).
+#
+# Prérequis : faux authorize actif (opentunnel.testStub, branche de test) et
+# secret OT_TEST_TOKEN = Vault kubernetes-cluster/devver/dev/opentunnel
+# test_authz_token. Le tunnel de bout en bout réutilise d'un run à l'autre le
+# même profil client (un seul certificat Let's Encrypt, pas un par run).
+name: Test OpenTunnel
+
+on:
+  push:
+    branches: [victor/opentunnel]
+    paths:
+      - opentunnel/**
+      - argocd/**
+      - tests/opentunnel/**
+      - .github/workflows/test-opentunnel.yml
+  workflow_dispatch:
+
+concurrency:
+  group: test-opentunnel
+  cancel-in-progress: false
+
+env:
+  API: https://share.dev.devver.app
+  CLIENT_VERSION: v0.6.2
+  OT_TEST_TOKEN: ${{ secrets.OT_TEST_TOKEN }}
+
+jobs:
+  test:
+    runs-on: self-hosted
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Attendre le déploiement (Argo, ~3 min après un push)
+        run: |
+          set -euo pipefail
+          [[ -n "${OT_TEST_TOKEN}" ]] || { echo "::error::secret OT_TEST_TOKEN absent"; exit 1; }
+          if [[ "${{ github.event_name }}" == "push" ]]; then sleep 180; fi
+          for i in $(seq 1 30); do
+            api=$(curl -s -m 8 "${API}/api/tunnel/x" || true)
+            stub=$(curl -s -o /dev/null -m 8 -w '%{http_code}' -X POST "${API}/api/tunnel" || true)
+            if [[ "${api}" == *TunnelNotFoundError* && "${stub}" == 401 ]]; then echo "✅ API et faux authorize en place"; exit 0; fi
+            echo "attente (api=${api:0:40} POST sans token=${stub})"; sleep 10
+          done
+          echo "::error::API ou faux authorize absents après 5 min"; exit 1
+
+      - name: "Test 1 — certificat de l'API (Let's Encrypt, valide)"
+        run: |
+          set -euo pipefail
+          curl -sS -o /dev/null -m 10 "${API}/api/tunnel/x" -w '%{http_code}\n' >/dev/null
+          echo | openssl s_client -connect share.dev.devver.app:443 -servername share.dev.devver.app 2>/dev/null \
+            | openssl x509 -noout -issuer -enddate
+          echo "✅ certificat accepté sans -k"
+
+      - name: Test 2 — surface publique
+        run: |
+          set -uo pipefail
+          fail=0
+          check() { got=$(curl -s -o /dev/null -m 10 -w '%{http_code}' "${@:3}"); \
+            if [[ "${got}" == "$2" ]]; then echo "✅ $1 -> ${got}"; else echo "❌ $1 -> ${got} (attendu $2)"; fail=1; fi; }
+          check "site vitrine /"                         404 "${API}/"
+          check "/install"                               404 "${API}/install"
+          check "/api/admin/stats"                       403 "${API}/api/admin/stats"
+          check "POST /api/tunnel sans token"            401 -X POST "${API}/api/tunnel" -H 'content-type: application/json' -d '{}'
+          check "POST /api/tunnel token invalide"        401 -X POST "${API}/api/tunnel" -H 'authorization: Bearer faux' -H 'content-type: application/json' -d '{}'
+          check "GET  /api/tunnel/<id> sans token rly_"  401 "${API}/api/tunnel/aaaaaaaaaaaa"
+          check "DELETE /api/tunnel/<id> sans token"     401 -X DELETE "${API}/api/tunnel/aaaaaaaaaaaa"
+          check "bridge /connect sans WebSocket"         426 "${API}/api/tunnel/aaaaaaaaaaaa/connect"
+          exit ${fail}
+
+      - name: Test 3 — contrat ForwardAuth (création et suppression par l'API)
+        run: |
+          set -euo pipefail
+          out=$(curl -s -m 15 -w '\n%{http_code}' -X POST "${API}/api/tunnel" \
+            -H "authorization: Bearer ${OT_TEST_TOKEN}" -H 'content-type: application/json' -d '{}')
+          code=$(tail -1 <<<"${out}"); body=$(head -n -1 <<<"${out}")
+          [[ "${code}" == 201 ]] || { echo "::error::création -> ${code} ${body}"; exit 1; }
+          id=$(jq -r '.tunnel.id' <<<"${body}"); token=$(jq -r '.token' <<<"${body}")
+          echo "::add-mask::${token}"
+          echo "✅ token accepté par le faux authorize : tunnel ${id} créé (201, sans certificat)"
+          code=$(curl -s -o /dev/null -m 10 -w '%{http_code}' -X DELETE "${API}/api/tunnel/${id}" -H "authorization: Bearer ${token}")
+          [[ "${code}" == 204 ]] || { echo "::error::suppression -> ${code}"; exit 1; }
+          echo "✅ tunnel ${id} supprimé avec son token rly_ (204)"
+
+      - name: Préparer le client OpenTunnel et le proxy D1
+        run: |
+          set -euo pipefail
+          base="${HOME}/.cache/devver-opentunnel-test"
+          mkdir -p "${base}/bin" "${base}/xdg/data" "${base}/xdg/config" "${base}/xdg/state" /tmp/ot-test-run
+          chmod 700 /tmp/ot-test-run
+          if [[ ! -x "${base}/bin/opentunnel-${CLIENT_VERSION}" ]]; then
+            tmp=$(mktemp -d)
+            url="https://github.com/anomalyco/opentunnel/releases/download/${CLIENT_VERSION}"
+            curl -fsSL -o "${tmp}/c.tgz" "${url}/opentunnel-linux-x64.tar.gz"
+            curl -fsSL -o "${tmp}/SHA256SUMS" "${url}/SHA256SUMS"
+            (cd "${tmp}" && grep ' opentunnel-linux-x64.tar.gz$' SHA256SUMS | sed 's/opentunnel-linux-x64.tar.gz/c.tgz/' | sha256sum -c -)
+            tar -xzf "${tmp}/c.tgz" -C "${tmp}"
+            install -m 0755 "${tmp}/opentunnel" "${base}/bin/opentunnel-${CLIENT_VERSION}"
+            rm -rf "${tmp}"
+          fi
+          ln -sf "opentunnel-${CLIENT_VERSION}" "${base}/bin/opentunnel"
+          # Jamais de service systemd sur le runner.
+          printf '#!/bin/sh\nexit 1\n' > "${base}/bin/systemctl"; chmod +x "${base}/bin/systemctl"
+          {
+            echo "OT_BASE=${base}"
+            echo "XDG_DATA_HOME=${base}/xdg/data"
+            echo "XDG_CONFIG_HOME=${base}/xdg/config"
+            echo "XDG_STATE_HOME=${base}/xdg/state"
+            echo "XDG_RUNTIME_DIR=/tmp/ot-test-run"
+            echo "OPENTUNNEL_API=http://127.0.0.1:18080"
+          } >> "${GITHUB_ENV}"
+          echo "${base}/bin" >> "${GITHUB_PATH}"
+          docker rm -f ot-test-proxy >/dev/null 2>&1 || true
+          docker run -d --name ot-test-proxy --network host -e OT_TEST_TOKEN \
+            -v "${GITHUB_WORKSPACE}/tests/opentunnel/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2.8-alpine >/dev/null
+          nohup python3 tests/opentunnel/ipapp.py > /tmp/ot-test-run/ipapp.log 2>&1 &
+          for i in $(seq 1 20); do curl -s -m 2 -o /dev/null http://127.0.0.1:18080/api/tunnel/x && break; sleep 1; done
+          echo "✅ client $("${base}/bin/opentunnel" --version 2>/dev/null || echo "${CLIENT_VERSION}") et proxy D1 prêts"
+
+      - name: Test 4 — tunnel de bout en bout (client d'origine, certificat, visiteur)
+        run: |
+          set -euo pipefail
+          out=$(timeout 300 opentunnel route add 18010 --name ip --proxy-protocol v2 2>&1) || { echo "${out}"; exit 1; }
+          echo "${out}" | tail -4
+          url=$(grep -o -E 'https://ip\.[a-z2-7]{12}\.share\.dev\.devver\.app' <<<"${out}" | tail -1)
+          [[ -n "${url}" ]] || { echo "::error::URL du tunnel introuvable"; exit 1; }
+          echo "TUNNEL_URL=${url}" >> "${GITHUB_ENV}"
+          for i in $(seq 1 30); do
+            page=$(curl -s -m 10 "${url}/" || true)
+            [[ "${page}" == devver-share-test* ]] && break; sleep 2
+          done
+          [[ "${page}" == devver-share-test* ]] || { echo "::error::${url} ne sert pas l'application locale"; opentunnel status || true; exit 1; }
+          echo "✅ ${url} sert l'application locale, certificat valide (curl sans -k)"
+          echo | openssl s_client -connect "${url#https://}:443" -servername "${url#https://}" 2>/dev/null | openssl x509 -noout -issuer -enddate
+
+      - name: Test 5 — IP réelle du visiteur (PROXY protocol jusqu'au poste)
+        run: |
+          set -euo pipefail
+          ip=$(curl -s -m 10 "${TUNNEL_URL}/" | sed -n 's/.*visiteur=//p')
+          echo "IP vue par l'application locale : ${ip}"
+          python3 - "${ip}" <<'PY'
+          import ipaddress, sys
+          ip = ipaddress.ip_address(sys.argv[1])
+          bad = [n for n in ("10.42.0.0/16", "10.43.0.0/16", "192.168.45.0/24") if ip in ipaddress.ip_network(n)]
+          if bad:
+              sys.exit(f"❌ {ip} est une adresse du cluster ({bad[0]}) : l'IP réelle est perdue")
+          print(f"✅ {ip} n'est pas une adresse du cluster (runner sur le LAN : IP de la box attendue)")
+          PY
+
+      - name: Test 6 — route ajoutée à chaud
+        run: |
+          set -euo pipefail
+          opentunnel route add 18010 --name ip2 --proxy-protocol v2 >/dev/null 2>&1 || true
+          url2="${TUNNEL_URL/https:\/\/ip./https://ip2.}"
+          for i in $(seq 1 20); do
+            [[ "$(curl -s -m 10 "${url2}/" || true)" == devver-share-test* ]] && { echo "✅ ${url2} répond sans nouveau certificat"; exit 0; }
+            sleep 2
+          done
+          echo "::error::${url2} ne répond pas"; exit 1
+
+      - name: Nettoyage (le tunnel est gardé pour le prochain run)
+        if: always()
+        run: |
+          opentunnel route remove ip2 >/dev/null 2>&1 || true
+          pkill -f "${OT_BASE:-/nonexistent}/bin/opentunnel" || true
+          pkill -f tests/opentunnel/ipapp.py || true
+          docker rm -f ot-test-proxy >/dev/null 2>&1 || true

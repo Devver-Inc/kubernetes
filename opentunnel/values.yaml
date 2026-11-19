@@ -54,6 +54,9 @@ createRateBurst: 100
 publicCreate: closed
 forwardAuth:
   address: http://backend-service.devver-backend-service.svc.cluster.local:3000/api/v1/tunnels/authorize
+  # TEST UNIQUEMENT : faux authorize (templates/authz-test.yaml) à la place du
+  # backend, token de test dans Vault (opentunnel/test_authz_token).
+  testStub: false
 
 mysql:
   image: mysql:8.4

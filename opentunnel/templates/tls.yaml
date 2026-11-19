@@ -79,7 +79,7 @@ metadata:
   namespace: devver-opentunnel
 spec:
   forwardAuth:
-    address: {{ .Values.forwardAuth.address | quote }}
+    address: {{ if .Values.forwardAuth.testStub }}"http://opentunnel-authz-test.devver-opentunnel.svc.cluster.local:8080/authorize"{{ else }}{{ .Values.forwardAuth.address | quote }}{{ end }}
     authRequestHeaders:
       - Authorization
     authResponseHeaders:
