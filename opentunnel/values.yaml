@@ -44,16 +44,28 @@ acme:
 
 # Derrière le frontal et Traefik, toutes les créations viennent de la même
 # adresse : la limite par IP d'OpenTunnel devient globale. La vraie limite est
-# l'authentification (ForwardAuth) et, plus tard, une limite par utilisateur.
+# l'authentification (plugin JWT) et, plus tard, une limite par utilisateur.
 createRatePerHour: 1000
 createRateBurst: 100
 
 # Création de tunnel (POST /api/tunnel) depuis l'extérieur :
-#   closed      : refusée (403) — tests infra, création par port-forward
-#   forwardAuth : autorisée si forwardAuth.address répond 200 (JWT Logto)
+#   closed : refusée (403) — création seulement par port-forward
+#   jwt    : réservée aux utilisateurs Logto — Traefik valide le JWT avec le
+#            plugin "jwt" (agilezebra/jwt-middleware, déclaré par le playbook
+#            03 de cluster-k8s-deployment)
 publicCreate: closed
-forwardAuth:
-  address: http://backend-service.devver-backend-service.svc.cluster.local:3000/api/v1/tunnels/authorize
+jwt:
+  # Nom du plugin dans la config statique de Traefik.
+  plugin: jwt
+  # Vides = valeurs dérivées du domaine : https://auth.<domain>/oidc et
+  # https://share.<domain>/api (ressource API Logto du partage).
+  issuer: ""
+  audience: ""
+  # Clés publiques de Logto, lues par le service interne (pas d'aller-retour
+  # par le frontal).
+  jwksUrl: http://logto-svc.devver-logto.svc.cluster.local:3001/oidc/jwks
+  # Logto signe en ES384 ; jamais d'algorithme symétrique (HS*).
+  algorithms: [ES384]
 
 mysql:
   image: mysql:8.4

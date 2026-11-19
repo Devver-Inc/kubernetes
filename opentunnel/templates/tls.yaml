@@ -68,22 +68,35 @@ spec:
   ipAllowList:
     sourceRange:
       - 127.0.0.1/32
-{{- if eq .Values.publicCreate "forwardAuth" }}
+{{- if eq .Values.publicCreate "jwt" }}
 ---
-# Création de tunnel réservée aux utilisateurs Logto : Traefik appelle d'abord
-# le backend (GET, en-tête Authorization d'origine) ; 200 = autorisé, sinon refus.
+# Création de tunnel réservée aux utilisateurs Logto : le plugin valide le JWT
+# (signature avec les clés de Logto, iss, aud, exp), retire le token avant de
+# transmettre et pose X-Devver-User = sub (retiré s'il est absent du token,
+# pour qu'un client ne puisse pas le fournir lui-même). Sinon : 401.
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: opentunnel-auth
   namespace: devver-opentunnel
+  annotations:
+    kubernetes.io/ingress.class: traefik
 spec:
-  forwardAuth:
-    address: {{ .Values.forwardAuth.address | quote }}
-    authRequestHeaders:
-      - Authorization
-    authResponseHeaders:
-      - X-Devver-User
+  plugin:
+    {{ .Values.jwt.plugin }}:
+      issuers:
+        - issuer: {{ .Values.jwt.issuer | default (printf "https://auth.%s/oidc" .Values.domain) | quote }}
+          jwks: {{ .Values.jwt.jwksUrl | quote }}
+      require:
+        aud: {{ .Values.jwt.audience | default (printf "https://%s/api" $api) | quote }}
+      validMethods: {{ .Values.jwt.algorithms | toJson }}
+      headerName: Authorization
+      cookieName: ""
+      forwardToken: false
+      headerMap:
+        X-Devver-User: sub
+      removeMissingHeaders: true
+      freshness: 0
 {{- end }}
 ---
 apiVersion: traefik.io/v1alpha1
@@ -100,7 +113,7 @@ spec:
     - match: {{ printf "Host(`%s`) && Method(`POST`) && Path(`/api/tunnel`)" $api | quote }}
       priority: 100
       middlewares:
-        - name: {{ if eq .Values.publicCreate "forwardAuth" }}opentunnel-auth{{ else }}opentunnel-deny{{ end }}
+        - name: {{ if eq .Values.publicCreate "jwt" }}opentunnel-auth{{ else }}opentunnel-deny{{ end }}
       services:
         - name: opentunnel
           port: 8080
@@ -115,7 +128,9 @@ spec:
     # Le reste de l'API : GET/DELETE d'un tunnel (token rly_), bridge
     # /api/tunnel/:id/connect. Le site vitrine d'OpenTunnel n'est pas exposé :
     # toute autre URL de share.<domaine> répond 404 (aucune route Traefik).
-    - match: {{ printf "Host(`%s`) && PathPrefix(`/api/`)" $api | quote }}
+    # POST /api/tunnel exclu : si la route de création est invalide (plugin non
+    # chargé), la création est refusée au lieu de passer sans contrôle.
+    - match: {{ printf "Host(`%s`) && PathPrefix(`/api/`) && !(Method(`POST`) && Path(`/api/tunnel`))" $api | quote }}
       priority: 10
       services:
         - name: opentunnel
