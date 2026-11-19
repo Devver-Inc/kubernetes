@@ -7,6 +7,13 @@ metadata:
     {{- include "app-template.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
+  {{- if .Values.project.id }}
+  # deploy-agent (v0.2+) : une réplique et ses volumes. L'ancien pod s'arrête
+  # avant que le nouveau démarre : un RollingUpdate demande la mémoire des deux
+  # à la fois et reste bloqué (Pending) sur un cluster chargé.
+  strategy:
+    type: Recreate
+  {{- end }}
   selector:
     matchLabels:
       {{- include "app-template.selectorLabels" . | nindent 6 }}
