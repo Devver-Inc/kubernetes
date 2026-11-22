@@ -78,8 +78,7 @@ dans `_helpers.tpl` de chaque chart, à placer dans
 | `argocd-repos` | `kubernetes`, `client-deployment` | **commun** (clés privées SSH des deploy keys, lecture seule) | Secrets de repo d'ArgoCD (`argocd/repo-*`) |
 | `minio` | `root_user` / `root_password` | fixe `devver-admin` / généré | `minio-credentials`, `backend-secret` → `STORAGE_*` |
 | `logto-postgres` | `username` / `password` | fixe `logto` / généré | `logto-postgres-secret` |
-| `backend` | `ENCRYPTION_KEY` | généré (hex 64) | `backend-secret`. ⚠️ **ne jamais la changer** sans re-chiffrer la base |
-| `backend` | `DEPLOY_AGENT_SECRET`, `GIT_TOKEN_SECRET` | généré | `backend-secret` |
+| `backend` | `DEPLOY_AGENT_SECRET` | généré (48, min. 32) | `backend-secret` |
 | `backend` | `ARGOCD_API_KEY` | **auto après installation** (pipeline) | `backend-secret` |
 | `backend` | `LOGTO_CLIENT_ID`, `LOGTO_SECRET`, `LOGTO_WEBHOOK_SIGNING_KEY` | **à saisir après l'install de Logto** (non bloquant pour la pipeline) | `backend-secret` |
 | `backend` | `VAULT_AUTH_MOUNT`, `VAULT_ROLE`, `VAULT_KV_MOUNT`, `VAULT_KV_PREFIX` (`<org>/<env>`) | fixe | `backend-secret` |
@@ -192,7 +191,8 @@ les variables `DEVVER_*` (ou la configuration qui en découle).
   aussitôt l'annotation `restartedAt`, absente de git.
   - Mots de passe MinIO et Postgres : il faut **aussi** changer le mot de passe
     dans le service lui-même. Le Secret ne sert qu'à l'initialisation.
-  - `ENCRYPTION_KEY` : ne pas la changer.
+  - `DEPLOY_AGENT_SECRET` : chaque token d'agent en dérive (HMAC). Le changer
+    invalide les tokens de tous les deploy-agents déjà déployés.
 - **Ajouter un secret à la stack.**
   1. Ajouter la clé au catalogue `ansible/vars/vault-k8s-secrets.yml`
      (`cluster-k8s-deployment`).

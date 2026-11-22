@@ -198,10 +198,6 @@ l'agent. Donc :
 
 ## Points à confirmer avec l'infra
 
-- **Format de `ENCRYPTION_KEY`.** Sur un nouveau cluster, elle est générée en
-  hex de 64 caractères (32 octets). Si le backend attend un autre format
-  (base64, longueur différente), le signaler : il faudra la régénérer
-  **avant** le premier démarrage.
 - **`LOGTO_CLIENT_ID`** est désormais une variable lue depuis Vault, au lieu
   d'être dans la config.
 
