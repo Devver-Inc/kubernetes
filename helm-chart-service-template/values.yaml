@@ -32,6 +32,8 @@ env: {}
 secretEnv:
   vaultKey: ""
   refreshInterval: 15m
+  # SecretStore du namespace, créé par le chart du projet (deploy-agent).
+  secretStore: vault
 
 # Commande lancée après le démarrage du conteneur (ex. rs.initiate de Mongo).
 # Elle doit être idempotente : elle repasse à chaque redémarrage du pod.
@@ -51,13 +53,6 @@ resources: {}
 cluster:
   org: ""
   env: ""
-
-secrets:
-  vault:
-    server: "https://vault.devver.app"
-    mount: "kubernetes-cluster"
-    authMount: ""   # vide = k8s-<cluster.org>-<cluster.env>
-    role: "eso-tenant"
 
 persistence:
   storageClass: "nfs-devver-prod"

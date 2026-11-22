@@ -28,10 +28,6 @@ project: {{ .Values.project.id | quote }}
 {{- printf "%s/%s/clients/%s" $org $env (include "service-template.namespace" .) -}}
 {{- end }}
 
-{{- define "service-template.vaultAuthMount" -}}
-{{- default (printf "k8s-%s-%s" .Values.cluster.org .Values.cluster.env) .Values.secrets.vault.authMount -}}
-{{- end }}
-
 {{/*
 Garde-fou Vault (template ESO v2) : échoue si une valeur lue est vide ou vaut
 CHANGEME ; ESO ne crée alors pas le Secret et le pod ne démarre pas.
