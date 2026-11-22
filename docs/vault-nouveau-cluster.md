@@ -78,6 +78,7 @@ dans `_helpers.tpl` de chaque chart, à placer dans
 | `argocd-repos` | `kubernetes`, `client-deployment` | **commun** (clés privées SSH des deploy keys, lecture seule) | Secrets de repo d'ArgoCD (`argocd/repo-*`) |
 | `minio` | `root_user` / `root_password` | fixe `devver-admin` / généré | `minio-credentials`, `backend-secret` → `STORAGE_*` |
 | `logto-postgres` | `username` / `password` | fixe `logto` / généré | `logto-postgres-secret` |
+| `logto-admin` | `username` / `password` | fixe `admin` / généré | — (compte de la console Logto, à créer avec ces valeurs au 1er accès) |
 | `backend` | `DEPLOY_AGENT_SECRET` | généré (48, min. 32) | `backend-secret` |
 | `backend` | `ARGOCD_API_KEY` | **auto après installation** (pipeline) | `backend-secret` |
 | `backend` | `LOGTO_CLIENT_ID`, `LOGTO_SECRET`, `LOGTO_WEBHOOK_SIGNING_KEY` | **à saisir après l'install de Logto** (non bloquant pour la pipeline) | `backend-secret` |
@@ -112,8 +113,10 @@ copie dans `kubernetes-cluster/<org>/<env>/<chemin>`.
    lancement prépare tous les secrets et s'arrête en listant ce qui manque.
 3. Saisir les secrets VM (`devver-infra-deployment/<org>/<env>`), relancer
    le même workflow : VMs, RKE2, Vault, ArgoCD, puis la stack par vagues.
-4. Après l'installation : créer l'application backend et le webhook dans
-   Logto, saisir `LOGTO_*` dans `backend`, forcer la synchro :
+4. Après l'installation : ouvrir la console Logto (`https://logto.<domaine>`)
+   et créer le compte admin avec `username` / `password` de `logto-admin`
+   (Logto ne permet pas de le créer autrement). Puis créer l'application
+   backend et le webhook dans Logto, saisir `LOGTO_*` dans `backend`, forcer la synchro :
    ```bash
    kubectl -n devver-backend-service annotate externalsecret backend-secret \
      force-sync=$(date +%s) --overwrite
