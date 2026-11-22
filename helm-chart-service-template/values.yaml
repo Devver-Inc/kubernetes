@@ -1,0 +1,68 @@
+# Un service d'un projet client : base du catalogue (Mongo, Postgres, Valkey)
+# ou image fournie par le client. Un conteneur, un volume optionnel, un Service
+# headless au même nom. Écrit par le backend dans
+# <cluster>/p-<id>/services/<service>/values.yaml ; l'ApplicationSet
+# client-services ajoute cluster.* et persistence.storageClass.
+
+project:
+  id: ""          # namespace p-<id>
+
+# Nom du StatefulSet et du Service : le DNS du service dans le namespace
+# (ex. p-<id>-postgres). Le pod est joignable en <name>-0.<name>.p-<id>.svc.
+name: ""
+
+image:
+  repository: ""
+  tag: ""
+  pullPolicy: IfNotPresent
+
+# Remplacent ENTRYPOINT / CMD de l'image ; vides = ceux de l'image.
+command: []
+args: []
+
+# [{ name: postgres, port: 5432 }] ; le premier sert à la readinessProbe.
+ports: []
+
+# Env non secret.
+env: {}
+
+# Env secret : toutes les clés de
+# kubernetes-cluster/<org>/<env>/clients/<namespace>/<vaultKey>, écrites par le
+# backend. Vide = pas d'env secret.
+secretEnv:
+  vaultKey: ""
+  refreshInterval: 15m
+
+# Commande lancée après le démarrage du conteneur (ex. rs.initiate de Mongo).
+# Elle doit être idempotente : elle repasse à chaque redémarrage du pod.
+postStart: []
+
+volume:
+  path: ""        # vide = pas de volume
+  size: 5Gi
+
+shm:
+  sizeLimit: ""   # ex. 256Mi : /dev/shm en mémoire (Postgres)
+
+# requests / limits Kubernetes, calculés par le backend depuis son catalogue.
+resources: {}
+
+# Injecté par l'ApplicationSet (chemin Vault kubernetes-cluster/<org>/<env>/...).
+cluster:
+  org: ""
+  env: ""
+
+secrets:
+  vault:
+    server: "https://vault.devver.app"
+    mount: "kubernetes-cluster"
+    authMount: ""   # vide = k8s-<cluster.org>-<cluster.env>
+    role: "eso-tenant"
+
+persistence:
+  storageClass: "nfs-devver-prod"
+
+network:
+  backendNamespace: "devver-backend-service"
+
+labels: {}

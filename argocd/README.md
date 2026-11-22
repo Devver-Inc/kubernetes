@@ -40,7 +40,7 @@ argocd/
 | 1 | `kasten` (désactivé) |
 | 2 | `minio`, `logto`, `mongo-db` |
 | 3 | `backend-service`, `frontend-app`, `landing-page`, `documentation-app`, `uptime-kuma` |
-| 4 | ApplicationSets `client-deployment`, `client-mongo` |
+| 4 | ApplicationSets `client-deployment`, `client-services` |
 
 Chaque vague attend que les Applications de la précédente soient *Healthy*
 (contrôle de santé des Applications dans `argocd-cm`, posé par l'Application

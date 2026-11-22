@@ -1,0 +1,109 @@
+{{- $name := include "service-template.name" . }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $name }}
+  namespace: {{ include "service-template.namespace" . }}
+  labels:
+    {{- include "service-template.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ $name }}
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "service-template.selectorLabels" . | nindent 6 }}
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Delete
+    whenScaled: Retain
+  template:
+    metadata:
+      labels:
+        {{- include "service-template.labels" . | nindent 8 }}
+    spec:
+      automountServiceAccountToken: false
+      # Sinon Kubernetes injecte <SERVICE>_PORT=tcp://… pour chaque Service du
+      # namespace, ce qui casse les images qui lisent une variable de ce nom.
+      enableServiceLinks: false
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: service
+          image: "{{ required "image.repository est requis" .Values.image.repository }}:{{ required "image.tag est requis" .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with .Values.command }}
+          command:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.args }}
+          args:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.ports }}
+          ports:
+            {{- range . }}
+            - name: {{ .name }}
+              containerPort: {{ .port }}
+            {{- end }}
+          {{- end }}
+          {{- with .Values.env }}
+          env:
+            {{- range $key, $value := . }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.secretEnv.vaultKey }}
+          envFrom:
+            - secretRef:
+                name: {{ $name }}-env
+          {{- end }}
+          {{- with .Values.postStart }}
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  {{- toYaml . | nindent 18 }}
+          {{- end }}
+          {{- with .Values.ports }}
+          readinessProbe:
+            tcpSocket:
+              port: {{ (first .).port }}
+            periodSeconds: 10
+            failureThreshold: 6
+          {{- end }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          securityContext:
+            allowPrivilegeEscalation: false
+          {{- if or .Values.volume.path .Values.shm.sizeLimit }}
+          volumeMounts:
+            {{- if .Values.volume.path }}
+            - name: data
+              mountPath: {{ .Values.volume.path }}
+            {{- end }}
+            {{- if .Values.shm.sizeLimit }}
+            - name: shm
+              mountPath: /dev/shm
+            {{- end }}
+          {{- end }}
+      {{- if .Values.shm.sizeLimit }}
+      volumes:
+        - name: shm
+          emptyDir:
+            medium: Memory
+            sizeLimit: {{ .Values.shm.sizeLimit }}
+      {{- end }}
+  {{- if .Values.volume.path }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels:
+          {{- include "service-template.selectorLabels" . | nindent 10 }}
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: {{ .Values.persistence.storageClass | quote }}
+        resources:
+          requests:
+            storage: {{ .Values.volume.size | quote }}
+  {{- end }}

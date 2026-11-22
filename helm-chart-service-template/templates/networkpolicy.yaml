@@ -1,0 +1,21 @@
+# Entrée : le namespace du projet (agent, autres services) et le backend
+# (tunnel devver connect). Les autres projets du cluster n'y ont pas accès.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "service-template.name" . }}
+  namespace: {{ include "service-template.namespace" . }}
+  labels:
+    {{- include "service-template.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "service-template.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector: {}
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.network.backendNamespace }}

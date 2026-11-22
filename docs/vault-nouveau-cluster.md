@@ -24,7 +24,7 @@ Le cluster de prod actuel n'est pas concerné.
   |---|---|---|
   | SA `external-secrets-system/eso-platform` | ClusterSecretStore `vault-platform` (namespaces `devver.app/secrets-tier=platform`) | `<org>/<env>/*` sauf `clients/` |
   | SA `external-secrets-system/eso-ghcr` | ClusterSecretStore `vault-ghcr` (namespaces `devver.app/needs-ghcr=true`) | `<org>/<env>/ghcr` |
-  | SA `vault-reader` / `vault-reader-mongo` d'un namespace client | SecretStore `vault` / `vault-mongo` du namespace | `<org>/<env>/clients/<ce namespace>/*` |
+  | SA `vault-reader` / `vault-reader-<service>` d'un namespace client | SecretStore `vault` / `vault-<service>` du namespace | `<org>/<env>/clients/<ce namespace>/*` |
   | SA `devver-backend-service/backend-service` (backend Devver) | — | lecture et écriture sur `<org>/<env>/clients/*` |
 
 ## Qui crée quoi

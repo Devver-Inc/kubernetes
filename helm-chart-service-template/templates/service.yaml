@@ -1,0 +1,23 @@
+{{- if .Values.ports }}
+# Headless : <name> résout directement vers le pod, et <name>-0.<name> lui donne
+# le nom stable dont le replica set Mongo a besoin. publishNotReadyAddresses :
+# ce nom doit résoudre pendant le postStart, avant que le pod soit prêt.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "service-template.name" . }}
+  namespace: {{ include "service-template.namespace" . }}
+  labels:
+    {{- include "service-template.labels" . | nindent 4 }}
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  ports:
+    {{- range .Values.ports }}
+    - name: {{ .name }}
+      port: {{ .port }}
+      targetPort: {{ .port }}
+    {{- end }}
+  selector:
+    {{- include "service-template.selectorLabels" . | nindent 4 }}
+{{- end }}
