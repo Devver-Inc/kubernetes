@@ -36,9 +36,8 @@ gitGateway:
 # (chart opentunnel). Déployé sur les clusters dont cluster.env est dans envs.
 opentunnel:
   envs: [dev]
-  # :edge est publié par le fork une fois opentunnel#2 sur master ; d'ici là,
-  # le build de la PR (même code).
-  image: ghcr.io/devver-inc/opentunnel-server:sha-55bd432
+  # Build de master du fork Devver-Inc/opentunnel (workflow ghcr-image.yml).
+  image: ghcr.io/devver-inc/opentunnel-server:sha-5a08404
   # Création de tunnel depuis l'extérieur (POST /api/tunnel) : jwt = réservée
   # aux utilisateurs Logto (JWT validé par le plugin Traefik "jwt").
   publicCreate: jwt
