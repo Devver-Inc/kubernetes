@@ -159,7 +159,7 @@ repo `cluster-k8s-deployment`), rien à saisir :
 
 Surcharge possible par cluster (`cluster_domain`, dans la zone `devver.app`).
 Terraform crée dans Cloudflare **deux CNAME non proxifiés**, `<domaine>` et
-`*.<domaine>`, vers `reverse-proxy.vrhometech.fr`, et les supprime au destroy.
+`*.<domaine>`, vers `lb.lpv.vops.fr`, et les supprime au destroy.
 Les certificats sont ceux de Let's Encrypt (cert-manager, DNS-01) : le proxy
 Cloudflare doit rester désactivé, son certificat ne couvrant qu'un niveau.
 

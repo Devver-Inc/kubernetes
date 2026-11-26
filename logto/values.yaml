@@ -7,7 +7,7 @@ domain: devver.app
 
 # Cible external-dns (CNAME) des Ingress ; vide = pas d'annotation (nouveaux
 # clusters, en attendant le Traefik frontal / DNS Cloudflare).
-dnsTarget: reverse-proxy.vrhometech.fr
+dnsTarget: lb.lpv.vops.fr
 
 # false sur les nouveaux clusters : namespaces créés par platform-secrets.
 namespace:
