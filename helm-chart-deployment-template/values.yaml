@@ -12,7 +12,7 @@ project:
 
 # Cible external-dns (CNAME) de l'Ingress ; vide = pas d'annotation (nouveaux
 # clusters, en attendant le Traefik frontal / DNS Cloudflare).
-dnsTarget: "reverse-proxy.vrhometech.fr"
+dnsTarget: "lb.lpv.vops.fr"
 
 imagePullSecrets:
   - name: ghcr-secret

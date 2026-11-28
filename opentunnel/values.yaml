@@ -1,0 +1,72 @@
+domain: devver.app
+dnsTarget: ""
+namespace:
+  create: false
+storageClass: ""
+
+issuer: letsencrypt-cloudflare
+
+# Sous-domaine du service : API sur share.<domain>, tunnels sur
+# <id>.share.<domain> et <route>.<id>.share.<domain>. Le DNS (*.<domain>) et la
+# route du frontal (HostSNIRegexp ^.+\.<domain>$, passthrough) couvrent déjà ces
+# noms : rien à ajouter côté DNS ni frontal.
+subdomain: share
+
+# Entrypoint Traefik des tunnels et de l'API.
+entryPoint: websecure
+
+# Traefik du cluster -> serveur (:8443) en PROXY protocol v2 : le serveur
+# transmet au poste du développeur l'adresse du visiteur vue par Traefik (IP
+# réelle : le frontal envoie le PROXY protocol, websecure le lit — playbooks
+# 03 et 07 de cluster-k8s-deployment).
+proxyProtocol: true
+
+image: ghcr.io/devver-inc/opentunnel-server:edge
+
+# Secrets depuis Vault : kubernetes-cluster/<prefix>/opentunnel
+# { acme_account_key_jwk, mysql_password, mysql_root_password, cloudflare_zone_id }
+# et le token Cloudflare (DNS:Edit) lu dans <prefix>/<cloudflare.path>.<cloudflare.property>.
+vault:
+  prefix: ""
+  refreshInterval: 15m
+cloudflare:
+  path: cloudflare
+  property: api_token
+
+acme:
+  # Production : .app est en HSTS préchargé, les navigateurs refusent tout
+  # certificat non reconnu (staging compris) sans exception possible.
+  # Quota Let's Encrypt partagé par tout devver.app : 50 nouveaux certificats
+  # par semaine (un par tunnel créé). Staging pour des tests sans navigateur :
+  # https://acme-staging-v02.api.letsencrypt.org/directory
+  url: https://acme-v02.api.letsencrypt.org/directory
+  email: info@devver.app
+
+# Derrière le frontal et Traefik, toutes les créations viennent de la même
+# adresse : la limite par IP d'OpenTunnel devient globale. La vraie limite est
+# l'authentification (plugin JWT) et, plus tard, une limite par utilisateur.
+createRatePerHour: 1000
+createRateBurst: 100
+
+# Création de tunnel (POST /api/tunnel) depuis l'extérieur :
+#   closed : refusée (403) — création seulement par port-forward
+#   jwt    : réservée aux utilisateurs Logto — Traefik valide le JWT avec le
+#            plugin "jwt" (agilezebra/jwt-middleware, déclaré par le playbook
+#            03 de cluster-k8s-deployment)
+publicCreate: closed
+jwt:
+  # Nom du plugin dans la config statique de Traefik.
+  plugin: jwt
+  # Vides = valeurs dérivées du domaine : https://auth.<domain>/oidc et
+  # https://share.<domain>/api (ressource API Logto du partage).
+  issuer: ""
+  audience: ""
+  # Clés publiques de Logto, lues par le service interne (pas d'aller-retour
+  # par le frontal).
+  jwksUrl: http://logto-svc.devver-logto.svc.cluster.local:3001/oidc/jwks
+  # Logto signe en ES384 ; jamais d'algorithme symétrique (HS*).
+  algorithms: [ES384]
+
+mysql:
+  image: mysql:8.4
+  storage: 2Gi

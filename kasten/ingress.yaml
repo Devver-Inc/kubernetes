@@ -4,7 +4,7 @@ metadata:
   name: kasten-ingress
   namespace: kasten-io
   annotations:
-    external-dns.alpha.kubernetes.io/target: reverse-proxy.vrhometech.fr
+    external-dns.alpha.kubernetes.io/target: lb.lpv.vops.fr
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     cert-manager.io/cluster-issuer: letsencrypt-cloudflare
 spec:
