@@ -24,8 +24,8 @@ recopie les valeurs de Vault dans des Secrets Kubernetes.
 - **Les chemins Vault** de chaque projet client :
 
   ```
-  kubernetes-cluster/<org>/<env>/clients/<namespace>/app     → env vars du conteneur
-  kubernetes-cluster/<org>/<env>/clients/<namespace>/mongo   → credentials Mongo
+  kubernetes-cluster/<org>/<env>/clients/<namespace>/app        → env vars du conteneur
+  kubernetes-cluster/<org>/<env>/clients/<namespace>/<moteur>   → env du conteneur de la base (mongo, postgres, valkey)
   ```
 
   - `<org>/<env>` identifie le cluster (ex : `acme/prod`). Ce n'est **pas**
@@ -38,8 +38,9 @@ recopie les valeurs de Vault dans des Secrets Kubernetes.
 - **Le chart client** (`helm-chart-deployment-template`, avec
   `secrets.enabled: true`) injecte **toutes** les clés de `.../app` comme
   variables d'environnement du conteneur.
-- **Le chart Mongo** construit `MONGO_ROOT_USERNAME`, `MONGO_ROOT_PASSWORD` et
-  `MONGO_CONNECTION_STRING` à partir de `.../mongo`.
+- **Le chart des services** (`helm-chart-service-template`, ApplicationSet
+  `client-services`) injecte **toutes** les clés de `.../<moteur>` comme
+  variables d'environnement du conteneur de la base.
 - **Le backend s'authentifie à Vault avec son ServiceAccount** (auth
   Kubernetes), comme ESO. Il n'a **aucun secret Vault** : il présente le jeton
   du SA `backend-service`, que le kubelet monte dans le pod et renouvelle
@@ -95,14 +96,21 @@ domaine, une org ou un env en dur : voir la section « Fiche du cluster » de
    - `DEVVER_SECRET` : **générer une valeur unique par projet**, 48 caractères
      alphanumériques aléatoires. On abandonne `dev-secret-123`, partagé par
      tous. À voir aussi côté deploy-agent.
-   - `DEVVER_MONGO_CONNECTION_STRING` si le projet a un Mongo.
+   - **Aucune** connection string : le backend l'envoie à l'agent à chaque
+     appel `/databases/*`, et l'injecte dans l'env des déploiements liés
+     (`dbLinks`). Une rotation de mot de passe ne redémarre donc pas l'agent.
    - **Pas** les variables saisies par l'utilisateur : `.../app` devient
      l'environnement du deploy-agent lui-même, qui ne le transmet jamais aux
      apps clientes (liste blanche). Voir « Env des déploiements » ci-dessous.
-3. **Si Mongo est demandé, écrire `.../clients/<ns>/mongo`** avec
-   `{ "username": "root", "password": "<généré>" }`. Le mot de passe doit être
-   **alphanumérique uniquement** : il est inséré tel quel dans la connection
-   string.
+3. **Pour chaque base, écrire `.../clients/<ns>/<moteur>`** : les clés sont
+   exactement l'env du conteneur, valeurs générées par le backend (mots de
+   passe en hex, insérés tels quels dans la connection string).
+
+   | Moteur | Clés |
+   |---|---|
+   | `mongo` | `MONGO_INITDB_ROOT_USERNAME`, `MONGO_INITDB_ROOT_PASSWORD`, `MONGO_KEYFILE` (base64, 756 octets max) |
+   | `postgres` | `POSTGRES_USER`, `POSTGRES_PASSWORD` |
+   | `valkey` | `VALKEY_PASSWORD` |
 4. **Seulement ensuite**, commiter les values dans `argocd-client-deployment`,
    **sous le dossier du cluster** : `${GITHUB_PATH_PREFIX}/p-<projectId>/`
    (les ApplicationSets lisent `<org>-<env>/p-*`)
@@ -122,14 +130,24 @@ domaine, une org ou un env en dur : voir la section « Fiche du cluster » de
        DEVVER_WIDGET_URL: ...
    ```
 
-   **`values-mongo.yaml`** : plus de bloc `auth`.
+   **`services/<moteur>/values.yaml`** : une base, rendue par
+   `helm-chart-service-template` (voir son `values.yaml`). Exemple Postgres :
 
    ```yaml
-   secrets:
-     enabled: true
+   project: { id: <projectId> }
+   name: p-<projectId>-postgres
+   image: { repository: postgres, tag: 18-alpine }
+   args: [postgres, -c, shared_buffers=256MB, -c, max_connections=100, -c, max_wal_size=512MB]
+   ports: [{ name: postgres, port: 5432 }]
+   env: { PGDATA: /var/lib/postgresql/data/pgdata, POSTGRES_DB: postgres }
+   secretEnv: { vaultKey: postgres }
+   volume: { path: /var/lib/postgresql, size: 5Gi }
+   shm: { sizeLimit: 256Mi }
+   resources: { requests: { cpu: 250m, memory: 1536Mi }, limits: { cpu: "1", memory: 1536Mi } }
    ```
 
-   `cluster.org`, `cluster.env` et `imagePullSecret.mode: eso` sont injectés par
+   `cluster.org`, `cluster.env`, `persistence.storageClass` (et, pour
+   `values.yaml`, `imagePullSecret.mode: eso`) sont injectés par
    l'ApplicationSet. Le backend n'a pas à les écrire.
 
 5. **Ne jamais écrire de valeur vide ni `CHANGEME`.** Le garde-fou de
@@ -147,11 +165,9 @@ domaine, une org ou un env en dur : voir la section « Fiche du cluster » de
 
 - **Variables d'environnement :** rien à faire. Elles arrivent dans le
   conteneur comme avant, via le Secret `<ns>-env` injecté en `envFrom`.
-- **Connection string Mongo :** à lire depuis le Secret `<ns>-mongo-secret`,
-  clé `MONGO_CONNECTION_STRING`. Le backend ne doit plus la construire ni la
-  mettre dans `container.env`. Si l'app doit la recevoir en variable
-  d'environnement, le backend copie la valeur qu'il a lui-même générée dans
-  `.../app`.
+- **Connection string d'une base :** construite par le backend depuis
+  `.../<moteur>` et envoyée dans l'env du déploiement qui la demande (`dbLinks`).
+  Le Service de la base est headless, nommé `p-<projectId>-<moteur>`.
 
 ### 4. Modifier une variable d'environnement d'un projet
 
@@ -173,7 +189,7 @@ domaine, une org ou un env en dur : voir la section « Fiche du cluster » de
 1. Commit de suppression dans `argocd-client-deployment`, comme aujourd'hui.
 2. Supprimer ses secrets :
    `DELETE /v1/kubernetes-cluster/metadata/<org>/<env>/clients/<ns>/app`
-   (et `/mongo`). Cela efface toutes les versions.
+   (et `/<moteur>` de chaque base). Cela efface toutes les versions.
 
 ### 6. Env des déploiements (deploy-agent v0.2)
 

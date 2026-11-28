@@ -1,10 +1,10 @@
-# MongoDB d'un projet client, si values-mongo.yaml existe à côté de son
-# values.yaml (même namespace que l'application, credentials depuis Vault).
+# Un service de projet client par <cluster>/p-<id>/services/<service>/values.yaml.
+# path[1] = p-<projectId>, path.basename = le service.
 {{- $id := include "root.clusterId" . }}
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: client-mongo
+  name: client-services
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "4"
@@ -14,10 +14,10 @@ spec:
         repoURL: {{ .Values.git.clientDeployment.repoURL }}
         revision: {{ .Values.git.clientDeployment.revision }}
         files:
-          - path: {{ $id }}/p-*/values-mongo.yaml
+          - path: {{ $id }}/p-*/services/*/values.yaml
   template:
     metadata:
-      name: {{ `'{{path[1]}}-mongo'` }}
+      name: {{ `'{{path[1]}}-{{path.basename}}'` }}
     spec:
       project: clients
       destination:
@@ -26,31 +26,20 @@ spec:
       sources:
         - repoURL: {{ .Values.git.kubernetes.repoURL }}
           targetRevision: {{ .Values.git.kubernetes.revision }}
-          path: helm-chart-mongo-template
+          path: helm-chart-service-template
           helm:
             valueFiles:
-              - {{ `'$values/{{path}}/values-mongo.yaml'` }}
+              - {{ `'$values/{{path}}/values.yaml'` }}
             parameters:
               - name: cluster.org
                 value: {{ .Values.cluster.org | quote }}
               - name: cluster.env
                 value: {{ .Values.cluster.env | quote }}
-              - name: secrets.enabled
-                value: "true"
               - name: persistence.storageClass
                 value: {{ include "root.storageClass" . | quote }}
         - repoURL: {{ .Values.git.clientDeployment.repoURL }}
           targetRevision: {{ .Values.git.clientDeployment.revision }}
           ref: values
-      # Le keyfile est tiré au hasard à chaque rendu (lookup ne voit pas le
-      # cluster sous Argo) : on garde celui du cluster (RespectIgnoreDifferences),
-      # sinon les membres du ReplicaSet n'ont plus la même clé.
-      ignoreDifferences:
-        - kind: Secret
-          name: {{ `'{{path[1]}}-mongo-keyfile'` }}
-          jsonPointers:
-            - /data
-            - /stringData
       syncPolicy:
         automated:
           prune: true
@@ -58,4 +47,3 @@ spec:
         syncOptions:
           - CreateNamespace=true
           - PrunePropagationPolicy=foreground
-          - RespectIgnoreDifferences=true

@@ -1,0 +1,5 @@
+apiVersion: v2
+name: service-template
+description: Un service d'un projet client (base du catalogue ou image du client) en StatefulSet
+type: application
+version: 0.1.0
